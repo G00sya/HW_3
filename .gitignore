@@ -15,3 +15,6 @@ config.ini
 
 # Игнорируем системные файлы macOS
 .DS_Store
+
+# Игнорируем PyCharm папки
+.idea/
