@@ -7,16 +7,21 @@ repos:
       - id: check-yaml
       - id: check-json
       - id: check-docstring-first
+      - id: end-of-file-fixer
       - id: trailing-whitespace
+      - id: mixed-line-ending
       - id: detect-private-key
+      - id: check-added-large-files
+      - id: check-merge-conflict
+        args: [--assume-in-merge]
 
   # See https://www.conventionalcommits.org/en/v1.0.0/ for more info.
-  #- repo: https://github.com/compilerla/conventional-pre-commit
-  #  rev: v3.2.0
-  #  hooks:
-  #    - id: conventional-pre-commit
-  #      stages: [commit-msg]
-  #      args: [feat, fix, test, docs, chore, style, refactor]
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.2.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [feat, fix, test, docs, chore, style, refactor]
 
   # See https://docs.astral.sh/ruff/ for more info.
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -25,13 +30,3 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
-
-  - repo: https://github.com/psf/black
-    rev: 23.12.1 # Используйте последнюю версию
-    hooks:
-      - id: black          # Автоматическое форматирование Python кода
-
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
-    hooks:
-      - id: flake8         # Проверка качества Python кода
