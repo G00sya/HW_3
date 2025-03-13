@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   pull_request:
-    types: [open]
+    types: [opened, reopened, synchronize]
     branches: [main]
 
 jobs:
