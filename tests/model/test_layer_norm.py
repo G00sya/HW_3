@@ -19,6 +19,9 @@ class TestLayerNorm:
         assert torch.allclose(layer_norm._gamma, torch.ones(d_model))  # gamma
         assert layer_norm._eps == eps  # epsilon
 
+        assert len(layer_norm._beta) == d_model
+        assert len(layer_norm._gamma) == d_model
+
     def test_layer_norm_forward_after_init(self, init_layer_norm) -> None:
         """
         Test forward right after init.
