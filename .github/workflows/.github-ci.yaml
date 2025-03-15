@@ -45,7 +45,7 @@ jobs:
       - name: Install Dependencies
         run: |
           poetry install
-#     Uncomment this line when first tests appear
-#      - name: Run Tests
-#        run: |
-#          poetry run pytest tests
+
+      - name: Run Tests
+        run: |
+          poetry run pytest tests
