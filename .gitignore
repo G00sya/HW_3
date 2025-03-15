@@ -1,21 +1,36 @@
-# Комментарий: игнорируем скомпилированный код
+# Скомпилированный код
 *.o
 *.exe
 *.pyc
 
-# Игнорируем папки зависимостей
+# Папки зависимостей
 node_modules/
 venv/
 
-# Игнорируем файлы конфигурации
+# Файлы конфигурации
 config.ini
 .env
 
-# Игнорируем логи
+# Логи
 *.log
 
-# Игнорируем системные файлы macOS
+# Системные файлы macOS
 .DS_Store
 
-# Игнорируем PyCharm папки
+# PyCharm папки
 .idea/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
