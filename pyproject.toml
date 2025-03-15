@@ -2,7 +2,7 @@
 name = "ml_hw3_6sem"
 version = "0.1.0"
 description = "ML homework №3."
-authors = ["Shatunov Evgeniy, Ischenko Igor, Nuryyeva Aynur"]
+authors = ["Shatunov Evgeniy, Ishchenko Igor, Nuryyeva Aynur"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
