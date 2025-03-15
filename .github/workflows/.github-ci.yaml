@@ -9,10 +9,20 @@ jobs:
   linter:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Python and Poetry
-        uses: ./.github/workflows/setup.yaml
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Install Poetry
+        run: |
+          pip install poetry
+
+      - name: Install Dependencies
+        run: |
+          poetry install
 
       - name: Run pre-commit checks
         run: |
@@ -21,10 +31,20 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Python and Poetry
-        uses: ./.github/workflows/setup.yaml
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Install Poetry
+        run: |
+          pip install poetry
+
+      - name: Install Dependencies
+        run: |
+          poetry install
 #     Uncomment this line when first tests appear
 #      - name: Run Tests
 #        run: |
