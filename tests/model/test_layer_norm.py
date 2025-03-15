@@ -4,7 +4,7 @@ from src.model.layer_norm import LayerNorm
 
 
 class TestLayerNorm:
-    def test_layer_norm_init(self) -> None:
+    def test_init(self) -> None:
         """
         Test init function of LayerNorm.
         """
@@ -22,7 +22,7 @@ class TestLayerNorm:
         assert len(layer_norm._beta) == d_model
         assert len(layer_norm._gamma) == d_model
 
-    def test_layer_norm_forward_after_init(self, init_layer_norm) -> None:
+    def test_forward_after_init(self, init_layer_norm) -> None:
         """
         Test forward right after init.
         """
@@ -32,7 +32,7 @@ class TestLayerNorm:
         layer_norm_result_init = layer_norm.forward(feature_vector)
         assert torch.allclose(true_result_init, layer_norm_result_init, atol=1e-05)
 
-    def test_layer_norm_forward(self, init_layer_norm) -> None:
+    def test_forward_complex(self, init_layer_norm) -> None:
         """
         Test forward with changed gamma and betta.
         """
