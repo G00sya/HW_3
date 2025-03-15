@@ -2,16 +2,36 @@
 Cool repository with 1st ML homework
 
 # Окружение
+Сначала установите `pipx` (Инструкция по ссылке https://pipx.pypa.io/stable/installation/)
 
-Установка гит хуков
+Установите `poetry`
 ```bash
-pip install pre-commit
-pre-commit install --install-hooks
+pipx install poetry
 ```
 
-Ручной запуск хуков
+Для создания окружения и установки всех нужных пакетов запустите
 ```bash
-pre-commit run --show-diff-on-failure --color=always --all-files
+make install
+```
+
+Для установки хуков
+```bash
+make hooks
+```
+
+Для запуска линтеров
+```bash
+make lint
+```
+
+Для запуска тестов
+```bash
+make test
+```
+
+Для обновления и фиксации зависимостей
+```bash
+poetry lock
 ```
 
 # Структура проекта
