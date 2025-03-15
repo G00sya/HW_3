@@ -2,11 +2,9 @@
 Cool repository with 1st ML homework
 
 # Окружение
-Сначала установите `pipx` (Инструкция по ссылке https://pipx.pypa.io/stable/installation/)
-
-Установите `poetry`
+Сперва установите `poetry`
 ```bash
-pipx install poetry
+pip install poetry
 ```
 
 Для создания окружения и установки всех нужных пакетов запустите
