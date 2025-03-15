@@ -2,16 +2,40 @@
 Cool repository with 1st ML homework
 
 # Окружение
-
-Установка гит хуков
+Сперва установите `poetry`
 ```bash
-pip install pre-commit
-pre-commit install --install-hooks
+pip install poetry
 ```
 
-Ручной запуск хуков
+Для создания окружения и установки всех нужных пакетов запустите
 ```bash
-pre-commit run --show-diff-on-failure --color=always --all-files
+make install
+```
+
+Для установки хуков
+```bash
+make hooks
+```
+
+Для запуска линтеров
+```bash
+make lint
+```
+
+Для запуска тестов
+```bash
+make test
+```
+
+Для обновления и фиксации зависимостей
+```bash
+poetry lock
+```
+
+Для активации виртуального окружения скопируйте то, что выдает эта команда и запустите скопированную команду
+```bash
+poetry env use python3.12
+poetry env activate
 ```
 
 # Структура проекта
