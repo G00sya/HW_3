@@ -8,9 +8,7 @@ class TestLayerNorm:
         """
         Test init function of LayerNorm.
         """
-        d_model = (
-            2  # Dimensionality of the model’s internal representations (embeddings).
-        )
+        d_model = 2  # Dimensionality of the model’s internal representations (embeddings).
         eps = 1e-6
         layer_norm = LayerNorm(features=d_model)
 
@@ -44,6 +42,4 @@ class TestLayerNorm:
 
         true_result_complex = torch.tensor([-0.4142, 2.4142])
         layer_norm_result_complex = layer_norm.forward(feature_vector)
-        assert torch.allclose(
-            true_result_complex, layer_norm_result_complex, atol=1e-05
-        )
+        assert torch.allclose(true_result_complex, layer_norm_result_complex, atol=1e-05)
