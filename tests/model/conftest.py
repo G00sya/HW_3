@@ -2,6 +2,7 @@ import pytest
 import torch
 
 from src.model.layer_norm import LayerNorm
+from src.model.multi_headed_attention import MultiHeadedAttention
 from src.model.scaled_dot_product_attention import ScaledDotProductAttention
 
 
@@ -34,4 +35,25 @@ def scaled_dot_product_attention_sample_tensors() -> tuple[torch.Tensor, torch.T
     query = torch.randn(batch_size, num_heads, seq_len_q, d_k)
     key = torch.randn(batch_size, num_heads, seq_len_k, d_k)
     value = torch.randn(batch_size, num_heads, seq_len_k, d_v)
+    return query, key, value
+
+
+@pytest.fixture
+def init_multi_headed_attention() -> MultiHeadedAttention:
+    heads_count = 8
+    d_model = 64
+    dropout_rate = 0.1
+    return MultiHeadedAttention(heads_count=heads_count, d_model=d_model, dropout_rate=dropout_rate)
+
+
+@pytest.fixture
+def multi_headed_attention_sample_tensors() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    batch_size = 2
+    seq_len_q = 10
+    seq_len_k = 12
+    d_model = 64
+
+    query = torch.randn(batch_size, seq_len_q, d_model)
+    key = torch.randn(batch_size, seq_len_k, d_model)
+    value = torch.randn(batch_size, seq_len_k, d_model)
     return query, key, value
