@@ -1,28 +1,4 @@
-import pytest
 import torch
-
-from src.model.scaled_dot_product_attention import ScaledDotProductAttention
-
-
-@pytest.fixture
-def init_scaled_dot_product_attention() -> ScaledDotProductAttention:
-    dropout_rate = 0.1
-    return ScaledDotProductAttention(dropout_rate=dropout_rate)
-
-
-@pytest.fixture
-def scaled_dot_product_attention_sample_tensors():
-    batch_size = 2
-    num_heads = 4
-    seq_len_q = 8
-    seq_len_k = 10
-    d_k = 32
-    d_v = 64
-
-    query = torch.randn(batch_size, num_heads, seq_len_q, d_k)
-    key = torch.randn(batch_size, num_heads, seq_len_k, d_k)
-    value = torch.randn(batch_size, num_heads, seq_len_k, d_v)
-    return query, key, value
 
 
 class TestScaledDotProductAttention:
