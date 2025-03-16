@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 import torch.nn as nn
 
@@ -10,7 +8,7 @@ class SharedEmbedding(nn.Module):
     used for transforming multiple inputs with different token IDs.
     """
 
-    def __init__(self, vocab_size: int, d_model: int, padding_idx: Optional[int] = None):
+    def __init__(self, vocab_size: int, d_model: int, padding_idx: int | None = None):
         """
         :param vocab_size: The size of the vocabulary (number of embeddings).
         :param d_model: The dimensionality of each embedding.
