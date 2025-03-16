@@ -40,6 +40,11 @@ class TestScaledDotProductAttention:
 
         output, attn_weights = init_scaled_dot_product_attention(query, key, value, mask)
 
+        # Check that the attention weights are close to zero in the masked positions
+        assert torch.all(
+            attn_weights[:, :, :, : seq_len_k // 2] < 1e-6
+        ), "Masking failed: attention weights not near zero"
+
         # Calculate the mean attention weight in the masked and unmasked regions
         masked_weights = attn_weights[:, :, :, : seq_len_k // 2]
         unmasked_weights = attn_weights[:, :, :, seq_len_k // 2 :]
@@ -50,4 +55,4 @@ class TestScaledDotProductAttention:
         # Assert that the ratio of mean weights is small enough
         # (Masked weights should be much smaller than unmasked)
         relative_ratio = mean_masked_weight / mean_unmasked_weight
-        assert relative_ratio < 0.8, f"Masking failed: relative ratio is {relative_ratio:.3f}, expected less than 0.8"
+        assert relative_ratio < 0.1, f"Masking failed: relative ratio is {relative_ratio:.100f}, expected less than 0.1"
