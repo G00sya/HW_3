@@ -16,9 +16,7 @@ class ResidualBlock(nn.Module):
         """
         super().__init__()
         self._norm = LayerNorm(size)
-        self._dropout = nn.Dropout(
-            dropout_rate
-        )  # Prevent overfitting by randomly dropping out neurons during training
+        self._dropout = nn.Dropout(dropout_rate)  # Prevent overfitting by randomly dropping out neurons during training
 
     def forward(self, inputs: torch.Tensor, sublayer: nn.Module) -> torch.Tensor:
         """
