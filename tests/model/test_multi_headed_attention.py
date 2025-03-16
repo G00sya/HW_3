@@ -9,23 +9,24 @@ from src.model.scaled_dot_product_attention import ScaledDotProductAttention
 class TestMultiHeadedAttention:
     def test_init(self, init_multi_headed_attention):
         """Test that the MultiHeadedAttention class is initialized correctly."""
-        assert hasattr(init_multi_headed_attention, "_w_q"), "Linear layer _w_q is not defined."
-        assert isinstance(init_multi_headed_attention._w_q, nn.Linear), "_w_q is not of type nn.Linear."
-        assert hasattr(init_multi_headed_attention, "_w_k"), "Linear layer _w_k is not defined."
-        assert isinstance(init_multi_headed_attention._w_k, nn.Linear), "_w_k is not of type nn.Linear."
-        assert hasattr(init_multi_headed_attention, "_w_v"), "Linear layer _w_v is not defined."
-        assert isinstance(init_multi_headed_attention._w_v, nn.Linear), "_w_v is not of type nn.Linear."
-        assert hasattr(init_multi_headed_attention, "_w_o"), "Linear layer _w_o is not defined."
-        assert isinstance(init_multi_headed_attention._w_o, nn.Linear), "_w_o is not of type nn.Linear."
-        assert hasattr(init_multi_headed_attention, "_attention"), "ScaledDotProductAttention is not defined."
+        multi_headed_attention, head_count = init_multi_headed_attention
+        assert hasattr(multi_headed_attention, "_w_q"), "Linear layer _w_q is not defined."
+        assert isinstance(multi_headed_attention._w_q, nn.Linear), "_w_q is not of type nn.Linear."
+        assert hasattr(multi_headed_attention, "_w_k"), "Linear layer _w_k is not defined."
+        assert isinstance(multi_headed_attention._w_k, nn.Linear), "_w_k is not of type nn.Linear."
+        assert hasattr(multi_headed_attention, "_w_v"), "Linear layer _w_v is not defined."
+        assert isinstance(multi_headed_attention._w_v, nn.Linear), "_w_v is not of type nn.Linear."
+        assert hasattr(multi_headed_attention, "_w_o"), "Linear layer _w_o is not defined."
+        assert isinstance(multi_headed_attention._w_o, nn.Linear), "_w_o is not of type nn.Linear."
+        assert hasattr(multi_headed_attention, "_attention"), "ScaledDotProductAttention is not defined."
         assert isinstance(
-            init_multi_headed_attention._attention, ScaledDotProductAttention
+            multi_headed_attention._attention, ScaledDotProductAttention
         ), "_attention is not of type ScaledDotProductAttention."
         assert (
-            init_multi_headed_attention._d_k
-            == init_multi_headed_attention._w_q.in_features // init_multi_headed_attention._heads_count
+            multi_headed_attention._d_k
+            == multi_headed_attention._w_q.in_features // multi_headed_attention._heads_count
         ), "d_k is not calculated correctly."
-        assert init_multi_headed_attention._heads_count == 8, "Number of heads is not set correctly in the module."
+        assert multi_headed_attention._heads_count == head_count, "Number of heads is not set correctly in the module."
 
     def test_d_model_not_divisible_by_heads_count(self):
         """Test that a ValueError is raised when d_model is not divisible by heads_count."""
@@ -39,14 +40,16 @@ class TestMultiHeadedAttention:
 
     def test_shapes(self, init_multi_headed_attention, multi_headed_attention_sample_tensors):
         """Test the output shapes of the MultiHeadedAttention module."""
+        multi_headed_attention, _ = init_multi_headed_attention
         query, key, value = multi_headed_attention_sample_tensors
-        output = init_multi_headed_attention(query, key, value)
+        output = multi_headed_attention(query, key, value)
 
         batch_size, seq_len_q, d_model = query.shape
         assert output.shape == (batch_size, seq_len_q, d_model), "Output shape is incorrect."
 
     def test_masking(self, init_multi_headed_attention, multi_headed_attention_sample_tensors):
         """Test that the masking mechanism works correctly."""
+        multi_headed_attention, _ = init_multi_headed_attention
         query, key, value = multi_headed_attention_sample_tensors
         batch_size, seq_len_q = query.shape[:2]
         seq_len_k = key.shape[1]
@@ -56,10 +59,10 @@ class TestMultiHeadedAttention:
         mask[:, :, : seq_len_k // 2] = 0
 
         # Apply the mask to the attention mechanism.
-        init_multi_headed_attention(query, key, value, mask)
+        multi_headed_attention(query, key, value, mask)
 
         # Retrieve the attention probabilities.
-        attn_probs = init_multi_headed_attention._attn_probs
+        attn_probs = multi_headed_attention._attn_probs
 
         # Ensure that the attention probabilities for the masked positions are zero.
         assert torch.all(

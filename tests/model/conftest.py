@@ -39,11 +39,11 @@ def scaled_dot_product_attention_sample_tensors() -> tuple[torch.Tensor, torch.T
 
 
 @pytest.fixture
-def init_multi_headed_attention() -> MultiHeadedAttention:
+def init_multi_headed_attention() -> tuple[MultiHeadedAttention, int]:
     heads_count = 8
     d_model = 64
     dropout_rate = 0.1
-    return MultiHeadedAttention(heads_count=heads_count, d_model=d_model, dropout_rate=dropout_rate)
+    return MultiHeadedAttention(heads_count=heads_count, d_model=d_model, dropout_rate=dropout_rate), heads_count
 
 
 @pytest.fixture
