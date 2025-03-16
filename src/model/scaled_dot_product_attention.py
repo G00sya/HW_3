@@ -42,7 +42,10 @@ class ScaledDotProductAttention(nn.Module):
         d_k = query.size(-1)
         scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_k)
         if mask is not None:
-            scores = scores.masked_fill(mask == 0, 1e-9)
+            # We set scores to a large negative value in order to effectively force the softmax to assign near-zero
+            # probabilities to the masked positions. This is crucial for preventing those positions from influencing
+            # the attention mechanism.
+            scores = scores.masked_fill(mask == 0, -1e9)
         p_attn = functional.softmax(scores, dim=-1)
         p_attn = self._dropout(p_attn)
 
