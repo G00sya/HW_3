@@ -27,7 +27,9 @@ class ScaledDotProductAttention(nn.Module):
         Computes the attention weights and applies them to the values.
 
         :param query: Query tensor.  Shape: (batch_size, num_heads, seq_len_q, d_k)
+                      seq_len_q - sequence length of query
         :param key: Key tensor. Shape: (batch_size, num_heads, seq_len_k, d_k)
+                    seq_len_k - sequence length of key
         :param value: Value tensor. Shape: (batch_size, num_heads, seq_len_k, d_v)  d_v might be d_k sometimes
         :param mask: Optional mask to block certain positions from attending.
                      Shape: (batch_size, 1, seq_len_q, seq_len_k) or (1, 1, seq_len_q, seq_len_k)
