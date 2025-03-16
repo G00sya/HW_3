@@ -21,7 +21,7 @@ class MultiHeadedAttention(nn.Module):
         super().__init__()
 
         if d_model % heads_count != 0:
-            raise ValueError(f"d_model ({d_model}) must be divisible by heads_count ({heads_count})")
+            raise ValueError(f"d_model ({d_model}) must be divisible by heads_count ({heads_count}).")
 
         self._d_k = d_model // heads_count
         self._heads_count = heads_count
