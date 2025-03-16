@@ -21,6 +21,12 @@ class LayerNorm(nn.Module):
         self._eps = eps
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        """
+        Calculates y = gamma * x + beta with normalized x.
+
+        :param inputs: The model’s internal representation (embeddings). Shape: (features)
+        :return: Result of normalization.
+        """
         mean = inputs.mean(-1, keepdim=True)
         std = inputs.std(-1, keepdim=True)
         inputs_norm = (inputs - mean) / (std + self._eps)
