@@ -36,13 +36,13 @@ class TestSharedEmbedding:
         token2_embedding = shared_embedding(torch.tensor([token_index]))
         assert torch.allclose(token1_embedding, token2_embedding), "Embeddings for the same token should be the same."
 
-    def test_batched_input(self):
+    def test_batched_input(self, init_shared_embedding_no_padding_idx):
         """
         Test SharedEmbedding with batched input.
         """
-        vocab_size = 10
-        d_model = 5
-        shared_embedding = SharedEmbedding(vocab_size, d_model)
+        shared_embedding = init_shared_embedding_no_padding_idx
+        vocab_size = shared_embedding.embedding.num_embeddings
+        d_model = shared_embedding.embedding.embedding_dim
 
         # Create a batched input tensor
         batch_size = 2
@@ -55,26 +55,24 @@ class TestSharedEmbedding:
         # Check the shape of the output tensor
         assert output_tensor.shape == (batch_size, seq_len, d_model), "Incorrect shape for batched output."
 
-    def test_no_padding(self):
+    def test_no_padding(self, init_shared_embedding_no_padding_idx):
         """
         Test SharedEmbedding without padding index.
         """
-        vocab_size = 10
-        d_model = 5
-        shared_embedding = SharedEmbedding(vocab_size, d_model)  # No padding_idx
+        shared_embedding = init_shared_embedding_no_padding_idx
+        d_model = shared_embedding.embedding.embedding_dim
 
         input_tensor = torch.tensor([0, 1, 2])
         output_tensor = shared_embedding(input_tensor)
 
         assert output_tensor.shape == (3, d_model), "Incorrect shape without padding."
 
-    def test_different_dtype(self):
+    def test_different_dtype(self, init_shared_embedding_no_padding_idx):
         """
         Test SharedEmbedding with different dtype of input tensor.
         """
-        vocab_size = 10
-        d_model = 5
-        shared_embedding = SharedEmbedding(vocab_size, d_model)
+        shared_embedding = init_shared_embedding_no_padding_idx
+        d_model = shared_embedding.embedding.embedding_dim
 
         input_tensor = torch.tensor([0, 1, 2], dtype=torch.int64)
         output_tensor = shared_embedding(input_tensor)
