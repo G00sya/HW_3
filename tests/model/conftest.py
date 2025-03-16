@@ -1,6 +1,5 @@
 import pytest
 import torch
-import torch.nn as nn
 
 from src.model.layer_norm import LayerNorm
 from src.model.residual_block import ResidualBlock
