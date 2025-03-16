@@ -26,18 +26,18 @@ class ScaledDotProductAttention(nn.Module):
         """
         Computes the attention weights and applies them to the values.
 
-        :param query: Query tensor.  Shape: (batch_size, num_heads, seq_len_q, d_k)
-                      seq_len_q - sequence length of query
-        :param key: Key tensor. Shape: (batch_size, num_heads, seq_len_k, d_k)
-                    seq_len_k - sequence length of key
-        :param value: Value tensor. Shape: (batch_size, num_heads, seq_len_k, d_v)  d_v might be d_k sometimes
+        :param query: Query tensor.  Shape: (batch_size, num_heads, seq_len_q, d_k).
+                      seq_len_q - sequence length of query.
+        :param key: Key tensor. Shape: (batch_size, num_heads, seq_len_k, d_k).
+                    seq_len_k - sequence length of key.
+        :param value: Value tensor. Shape: (batch_size, num_heads, seq_len_k, d_v)  d_v might be d_k sometimes.
         :param mask: Optional mask to block certain positions from attending.
-                     Shape: (batch_size, 1, seq_len_q, seq_len_k) or (1, 1, seq_len_q, seq_len_k)
+                     Shape: (batch_size, 1, seq_len_q, seq_len_k) or (1, 1, seq_len_q, seq_len_k).
                      Use 1 for values we don't want to mask.
 
         :return: A tuple containing:
-            - The weighted values (attention output). Shape: (batch_size, num_heads, seq_len_q, d_v)
-            - The attention probabilities (attention weights). Shape: (batch_size, num_heads, seq_len_q, seq_len_k)
+            - The weighted values (attention output). Shape: (batch_size, num_heads, seq_len_q, d_v).
+            - The attention probabilities (attention weights). Shape: (batch_size, num_heads, seq_len_q, seq_len_k).
         """
         d_k = query.size(-1)
         scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_k)
