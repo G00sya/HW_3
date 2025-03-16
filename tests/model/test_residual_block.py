@@ -3,8 +3,6 @@ from unittest.mock import MagicMock
 import torch
 import torch.nn as nn
 
-from src.model.residual_block import ResidualBlock
-
 
 class TestResidualBlock:
     def test_init(self, init_residual_block) -> None:
@@ -23,29 +21,25 @@ class TestResidualBlock:
         # Check if Dropout has the correct dropout rate
         assert residual_block._dropout.p == dropout_rate, "Dropout rate is incorrect"
 
-    def test_residual_block_forward_calls(self):
+    def test_residual_block_forward_calls(self, init_residual_block):
         """
         Tests that the sublayers are called with the correct arguments.
         """
-        size = 128
-        dropout_rate = 0.1
-
-        batch_size = 4
-        seq_len = 32
-        input_tensor = torch.randn(batch_size, seq_len, size)
-
         # Create MagicMock instances for the layers
         norm_mock = MagicMock(spec=nn.LayerNorm)
         dropout_mock = MagicMock(spec=nn.Dropout)
 
         # Create a ResidualBlock with the mocked layers
-        residual_block = ResidualBlock(size, dropout_rate)
+        residual_block, d_model, dropout_rate = init_residual_block
         residual_block._norm = norm_mock
         residual_block._dropout = dropout_mock
 
+        batch_size = 4
+        seq_len = 32
+        input_tensor = torch.randn(batch_size, seq_len, d_model)
+
         # Create a Linear model as sublayer
-        linear_layer = nn.Linear(size, size)
-        sublayer = MagicMock(spec=linear_layer)
+        sublayer = MagicMock(spec=nn.Linear(d_model, d_model))
 
         residual_block.forward(input_tensor, sublayer)
 
