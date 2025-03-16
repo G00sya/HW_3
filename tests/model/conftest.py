@@ -26,13 +26,3 @@ def init_residual_block() -> (ResidualBlock, int, float):
     dropout_rate = 0.2
     residual_block = ResidualBlock(size=d_model, dropout_rate=dropout_rate)
     return residual_block, d_model, dropout_rate
-
-
-@pytest.fixture()
-def init_sublayer(init_residual_block) -> nn.Module:
-    """
-    Init sublayer as linear module.
-    """
-    residual_block, d_model, dropout_rate = init_residual_block
-    linear_model = nn.Linear(in_features=d_model, out_features=d_model)
-    return linear_model
