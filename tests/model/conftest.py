@@ -17,9 +17,9 @@ def init_layer_norm() -> (LayerNorm, torch.Tensor):
 
 
 @pytest.fixture
-def init_scaled_dot_product_attention() -> ScaledDotProductAttention:
+def init_scaled_dot_product_attention() -> tuple[ScaledDotProductAttention, float]:
     dropout_rate = 0.1
-    return ScaledDotProductAttention(dropout_rate=dropout_rate)
+    return ScaledDotProductAttention(dropout_rate=dropout_rate), dropout_rate
 
 
 @pytest.fixture
