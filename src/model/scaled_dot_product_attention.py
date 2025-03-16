@@ -10,7 +10,7 @@ class ScaledDotProductAttention(nn.Module):
     Scaled Dot-Product Attention mechanism. This is a core building block of the Transformer architecture.
     """
 
-    def __init__(self, dropout_rate):
+    def __init__(self, dropout_rate: float):
         """
         Initializes the attention module.
 
@@ -20,7 +20,9 @@ class ScaledDotProductAttention(nn.Module):
 
         self._dropout = nn.Dropout(dropout_rate)
 
-    def forward(self, query, key, value, mask):
+    def forward(
+        self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, mask: torch.Tensor | None = None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Computes the attention weights and applies them to the values.
 
