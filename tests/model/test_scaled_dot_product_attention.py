@@ -5,11 +5,15 @@ class TestScaledDotProductAttention:
     def test_init(self, init_scaled_dot_product_attention):
         """Tests that the ScaledDotProductAttention class is initialized correctly."""
         scaled_dot_product_attention, dropout_rate = init_scaled_dot_product_attention
-        assert hasattr(scaled_dot_product_attention, "_dropout"), "Dropout layer is not defined as _dropout."
+        assert hasattr(
+            scaled_dot_product_attention, "_ScaledDotProductAttention__dropout"
+        ), "Dropout layer is not defined as _dropout."
         assert isinstance(
-            scaled_dot_product_attention._dropout, torch.nn.Dropout
+            scaled_dot_product_attention._ScaledDotProductAttention__dropout, torch.nn.Dropout
         ), "The dropout layer is not of type nn.Dropout"
-        assert scaled_dot_product_attention._dropout.p == 0.1, "Dropout rate is not set correctly in the module."
+        assert (
+            scaled_dot_product_attention._ScaledDotProductAttention__dropout.p == 0.1
+        ), "Dropout rate is not set correctly in the module."
 
     def test_shapes(self, init_scaled_dot_product_attention, scaled_dot_product_attention_sample_tensors):
         scaled_dot_product_attention, _ = init_scaled_dot_product_attention
