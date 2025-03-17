@@ -10,7 +10,7 @@ class ScaledDotProductAttention(nn.Module):
     Scaled Dot-Product Attention mechanism. This is a core building block of the Transformer architecture.
     """
 
-    def __init__(self, dropout_rate: float):
+    def __init__(self, dropout_rate: float | int):
         """
         Initializes the attention module.
 
@@ -18,8 +18,10 @@ class ScaledDotProductAttention(nn.Module):
         """
         super().__init__()
 
-        if not isinstance(dropout_rate, float):
-            raise TypeError(f"Dropout rate must be a float, but got {type(dropout_rate)}")
+        if not isinstance(dropout_rate, float) and not isinstance(dropout_rate, int):
+            raise TypeError(f"Dropout_rate must be a float or int, but got {type(dropout_rate)}")
+        if not 0 <= dropout_rate <= 1:
+            raise ValueError(f"Dropout_rate must be between 0 and 1, but got {dropout_rate}")
 
         self.__dropout = nn.Dropout(dropout_rate)
 
