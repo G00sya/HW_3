@@ -2,9 +2,8 @@ import pytest
 import torch
 
 from src.model.layer_norm import LayerNorm
-from src.model.scaled_dot_product_attention import ScaledDotProductAttention
 from src.model.residual_block import ResidualBlock
-
+from src.model.scaled_dot_product_attention import ScaledDotProductAttention
 
 
 @pytest.fixture
