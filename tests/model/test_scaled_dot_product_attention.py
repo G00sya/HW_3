@@ -19,7 +19,11 @@ class TestScaledDotProductAttention:
         ), "Dropout rate is not set correctly in the module."
         # Check if error is raised with invalid value
         with pytest.raises(TypeError):
-            ScaledDotProductAttention(dropout_rate=1)
+            ScaledDotProductAttention(dropout_rate="rate")
+        with pytest.raises(ValueError):
+            ScaledDotProductAttention(dropout_rate=-1.5)
+        with pytest.raises(ValueError):
+            ScaledDotProductAttention(dropout_rate=2)
 
     def test_shapes(self, init_scaled_dot_product_attention, scaled_dot_product_attention_sample_tensors):
         scaled_dot_product_attention, _ = init_scaled_dot_product_attention
