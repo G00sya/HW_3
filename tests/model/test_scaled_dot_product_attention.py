@@ -1,4 +1,7 @@
+import pytest
 import torch
+
+from src.model.scaled_dot_product_attention import ScaledDotProductAttention
 
 
 class TestScaledDotProductAttention:
@@ -14,6 +17,9 @@ class TestScaledDotProductAttention:
         assert (
             scaled_dot_product_attention._ScaledDotProductAttention__dropout.p == 0.1
         ), "Dropout rate is not set correctly in the module."
+        # Check if error is raised with invalid value
+        with pytest.raises(TypeError):
+            ScaledDotProductAttention(dropout_rate=1)
 
     def test_shapes(self, init_scaled_dot_product_attention, scaled_dot_product_attention_sample_tensors):
         scaled_dot_product_attention, _ = init_scaled_dot_product_attention
