@@ -1,5 +1,3 @@
-from typing import Union
-
 import torch
 import torch.nn as nn
 
@@ -11,7 +9,7 @@ class ResidualBlock(nn.Module):
     Add to function result its argument to avoid the problem of a vanishing gradient.
     """
 
-    def __init__(self, size: int, dropout_rate: Union[float, int]):
+    def __init__(self, size: int, dropout_rate: float | int):
         """
         :param size: Dimensionality of the model's internal representations (embeddings). Must be a positive integer.
         :param dropout_rate: The probability of dropping out (setting to 0) a neuron's output during the forward pass.

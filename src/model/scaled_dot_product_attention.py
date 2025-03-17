@@ -20,6 +20,7 @@ class ScaledDotProductAttention(nn.Module):
 
         if not isinstance(dropout_rate, float):
             raise TypeError(f"Dropout rate must be a float, but got {type(dropout_rate)}")
+
         self.__dropout = nn.Dropout(dropout_rate)
 
     def forward(
