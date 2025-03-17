@@ -1,6 +1,8 @@
+import pytest
 import torch
 import torch.nn as nn
 
+from src.model.multi_headed_attention import MultiHeadedAttention
 from src.model.scaled_dot_product_attention import ScaledDotProductAttention
 
 
@@ -38,6 +40,17 @@ class TestMultiHeadedAttention:
         assert (
             multi_headed_attention._MultiHeadedAttention__heads_count == head_count
         ), "Number of heads is not set correctly in the module."
+
+    def test_raise_error_with_invalid_value(self):
+        """Test that an error is raised when invalid value is given."""
+        with pytest.raises(ValueError):
+            MultiHeadedAttention(heads_count=3, d_model=10, dropout_rate=0.1)
+        with pytest.raises(TypeError):
+            MultiHeadedAttention(heads_count=0.3, d_model=10, dropout_rate=0.1)
+        with pytest.raises(TypeError):
+            MultiHeadedAttention(heads_count=3, d_model=10.5, dropout_rate=0.1)
+        with pytest.raises(TypeError):
+            MultiHeadedAttention(heads_count=3, d_model=10, dropout_rate=1)
 
     def test_shapes(self, init_multi_headed_attention, multi_headed_attention_sample_tensors):
         """Test the output shapes of the MultiHeadedAttention module."""
