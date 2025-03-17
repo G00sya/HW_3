@@ -3,6 +3,8 @@ import torch
 
 from src.model.layer_norm import LayerNorm
 from src.model.scaled_dot_product_attention import ScaledDotProductAttention
+from src.model.residual_block import ResidualBlock
+
 
 
 @pytest.fixture
@@ -14,6 +16,17 @@ def init_layer_norm() -> (LayerNorm, torch.Tensor):
     layer_norm = LayerNorm(features=d_model)
     feature_vector = torch.arange(start=1, end=d_model + 1, dtype=torch.float32)
     return layer_norm, feature_vector
+
+
+@pytest.fixture()
+def init_residual_block() -> (ResidualBlock, int, float):
+    """
+    Init ResidualBlock.
+    """
+    d_model = 2
+    dropout_rate = 0.2
+    residual_block = ResidualBlock(size=d_model, dropout_rate=dropout_rate)
+    return residual_block, d_model, dropout_rate
 
 
 @pytest.fixture
