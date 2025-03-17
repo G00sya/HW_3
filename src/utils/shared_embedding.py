@@ -40,7 +40,7 @@ class SharedEmbedding(nn.Module):
         if padding_idx is not None and padding_idx < 0:
             raise ValueError(f"padding_idx must be a non-negative number or None, but got {padding_idx}")
 
-        self.embedding = nn.Embedding(vocab_size, d_model, padding_idx=padding_idx)
+        self.__embedding = nn.Embedding(vocab_size, d_model, padding_idx=padding_idx)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -54,4 +54,4 @@ class SharedEmbedding(nn.Module):
         if not isinstance(x, torch.Tensor):
             raise TypeError(f"x must be a torch.Tensor, but got {type(x)}")
 
-        return self.embedding(x)
+        return self.__embedding(x)

@@ -15,8 +15,10 @@ class TestSharedEmbedding:
 
         # Create an instance of SharedEmbedding
         shared_embedding = SharedEmbedding(vocab_size, d_model, padding_idx)
-        assert shared_embedding.embedding.num_embeddings == vocab_size, "Wrong parameters of nn.Embedding"
-        assert shared_embedding.embedding.embedding_dim == d_model, "Wrong parameters of nn.Embedding"
+        assert (
+            shared_embedding._SharedEmbedding__embedding.num_embeddings == vocab_size
+        ), "Wrong parameters of nn.Embedding"
+        assert shared_embedding._SharedEmbedding__embedding.embedding_dim == d_model, "Wrong parameters of nn.Embedding"
 
         # Create an input tensor
         input_tensor = torch.tensor([1, 2, 3, 4, 5])
@@ -91,9 +93,7 @@ class TestSharedEmbedding:
         """
         Test SharedEmbedding with batched input.
         """
-        shared_embedding = init_shared_embedding_no_padding_idx
-        vocab_size = shared_embedding.embedding.num_embeddings
-        d_model = shared_embedding.embedding.embedding_dim
+        shared_embedding, vocab_size, d_model = init_shared_embedding_no_padding_idx
 
         # Create a batched input tensor
         batch_size = 2
@@ -110,8 +110,7 @@ class TestSharedEmbedding:
         """
         Test SharedEmbedding without padding index.
         """
-        shared_embedding = init_shared_embedding_no_padding_idx
-        d_model = shared_embedding.embedding.embedding_dim
+        shared_embedding, vocab_size, d_model = init_shared_embedding_no_padding_idx
 
         input_tensor = torch.tensor([0, 1, 2])
         output_tensor = shared_embedding(input_tensor)
@@ -122,8 +121,7 @@ class TestSharedEmbedding:
         """
         Test SharedEmbedding with different dtype of input tensor.
         """
-        shared_embedding = init_shared_embedding_no_padding_idx
-        d_model = shared_embedding.embedding.embedding_dim
+        shared_embedding, vocab_size, d_model = init_shared_embedding_no_padding_idx
 
         input_tensor = torch.tensor([0, 1, 2], dtype=torch.int64)
         output_tensor = shared_embedding(input_tensor)
