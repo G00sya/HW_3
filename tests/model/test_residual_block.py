@@ -59,12 +59,12 @@ class TestResidualBlock:
         with pytest.raises(ValueError):
             ResidualBlock(size=128, dropout_rate=1.1)
 
-    def test_forward_inputs_type_error(self, init_residual_block, init_sublayer):
+    def test_forward_inputs_type_error(self, init_residual_block):
         """
         Test that TypeError is raised when inputs is not a torch.Tensor.
         """
-        residual_block, _, _ = init_residual_block
-        sublayer = init_sublayer
+        residual_block, d_model, dropout_rate = init_residual_block
+        sublayer = nn.Linear(d_model, d_model)
 
         with pytest.raises(TypeError):
             residual_block.forward(inputs="not a tensor", sublayer=sublayer)
@@ -73,7 +73,7 @@ class TestResidualBlock:
         """
         Test that TypeError is raised when sublayer is not an nn.Module.
         """
-        residual_block, _, _ = init_residual_block
+        residual_block, d_model, dropout_rate = init_residual_block
         inputs = torch.randn(4, 32, 2)
 
         with pytest.raises(TypeError):
