@@ -32,8 +32,8 @@ class ResidualBlock(nn.Module):
         if not 0 <= dropout_rate <= 1:
             raise ValueError(f"Dropout_rate must be between 0 and 1, but got {dropout_rate}")
 
-        self._norm = LayerNorm(size)  # Assuming LayerNorm takes size as an argument
-        self._dropout = nn.Dropout(dropout_rate)
+        self.__norm = LayerNorm(size)  # Assuming LayerNorm takes size as an argument
+        self.__dropout = nn.Dropout(dropout_rate)
 
     def forward(self, inputs: torch.Tensor, sublayer: nn.Module) -> torch.Tensor:
         """
@@ -54,7 +54,7 @@ class ResidualBlock(nn.Module):
         if not isinstance(sublayer, nn.Module):
             raise TypeError(f"Sublayer must be an nn.Module, but got {type(sublayer)}")
 
-        normalized = self._norm(inputs)
+        normalized = self.__norm(inputs)
         sublayer_result = sublayer(normalized)
-        dropout_result = self._dropout(sublayer_result)
+        dropout_result = self.__dropout(sublayer_result)
         return torch.add(inputs, dropout_result)
