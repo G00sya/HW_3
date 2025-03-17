@@ -10,7 +10,7 @@ class MultiHeadedAttention(nn.Module):
     from different representation subspaces at different positions.
     """
 
-    def __init__(self, heads_count: int, d_model: int, dropout_rate: float = 0.1):
+    def __init__(self, heads_count: int, d_model: int, dropout_rate: float | int = 0.1):
         """
         Initializes the MultiHeadedAttention module.
 
@@ -24,8 +24,10 @@ class MultiHeadedAttention(nn.Module):
             raise TypeError(f"Heads count must be an int, but got {type(heads_count)}.")
         if not isinstance(d_model, int):
             raise TypeError(f"Dimensionality of input and output embeddings must be an int, but got {type(d_model)}.")
-        if not isinstance(dropout_rate, float):
-            raise TypeError(f"Dropout rate must be a float, but got {type(dropout_rate)}.")
+        if not isinstance(dropout_rate, float) and not isinstance(dropout_rate, int):
+            raise TypeError(f"Dropout_rate must be a float or an int, but got {type(dropout_rate)}.")
+        if not 0 <= dropout_rate <= 1:
+            raise ValueError(f"Dropout_rate must be between 0 and 1, but got {dropout_rate}.")
         if d_model % heads_count != 0:
             raise ValueError(f"d_model ({d_model}) must be divisible by heads_count ({heads_count}).")
 
