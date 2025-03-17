@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from src.utils.shared_embedding import SharedEmbedding
@@ -35,6 +36,56 @@ class TestSharedEmbedding:
         token1_embedding = shared_embedding(torch.tensor([token_index]))
         token2_embedding = shared_embedding(torch.tensor([token_index]))
         assert torch.allclose(token1_embedding, token2_embedding), "Embeddings for the same token should be the same."
+
+    def test_init_vocab_size_type_error(self):
+        """
+        Test that TypeError is raised when vocab_size is not an int.
+        """
+        with pytest.raises(TypeError):
+            SharedEmbedding(vocab_size="10", d_model=5)
+
+    def test_init_vocab_size_value_error(self):
+        """
+        Test that ValueError is raised when vocab_size is not positive.
+        """
+        with pytest.raises(ValueError):
+            SharedEmbedding(vocab_size=-10, d_model=5)
+
+    def test_init_d_model_type_error(self):
+        """
+        Test that TypeError is raised when d_model is not an int.
+        """
+        with pytest.raises(TypeError):
+            SharedEmbedding(vocab_size=10, d_model="5")
+
+    def test_init_d_model_value_error(self):
+        """
+        Test that ValueError is raised when d_model is not positive.
+        """
+        with pytest.raises(ValueError):
+            SharedEmbedding(vocab_size=10, d_model=-5)
+
+    def test_init_padding_idx_type_error(self):
+        """
+        Test that TypeError is raised when padding_idx is not an int or None.
+        """
+        with pytest.raises(TypeError):
+            SharedEmbedding(vocab_size=10, d_model=5, padding_idx="0")
+
+    def test_init_padding_idx_value_error(self):
+        """
+        Test that ValueError is raised when padding_idx is negative.
+        """
+        with pytest.raises(ValueError):
+            SharedEmbedding(vocab_size=10, d_model=5, padding_idx=-1)
+
+    def test_forward_x_type_error(self):
+        """
+        Test that TypeError is raised when x is not a torch.Tensor.
+        """
+        shared_embedding = SharedEmbedding(vocab_size=10, d_model=5)
+        with pytest.raises(TypeError):
+            shared_embedding.forward(x="not a tensor")
 
     def test_batched_input(self, init_shared_embedding_no_padding_idx):
         """
