@@ -17,7 +17,6 @@ class TestScaledDotProductAttention:
         assert (
             scaled_dot_product_attention._ScaledDotProductAttention__dropout.p == 0.1
         ), "Dropout rate is not set correctly in the module."
-
         # Check if error is raised with invalid value
         with pytest.raises(TypeError):
             ScaledDotProductAttention(dropout_rate=1)
