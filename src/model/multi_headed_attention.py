@@ -21,11 +21,11 @@ class MultiHeadedAttention(nn.Module):
         super().__init__()
 
         if not isinstance(heads_count, int):
-            raise TypeError(f"Heads count must be an int, but got {type(heads_count)}")
+            raise TypeError(f"Heads count must be an int, but got {type(heads_count)}.")
         if not isinstance(d_model, int):
-            raise TypeError(f"Dimensionality of input and output embeddings must be an int, but got {type(d_model)}")
+            raise TypeError(f"Dimensionality of input and output embeddings must be an int, but got {type(d_model)}.")
         if not isinstance(dropout_rate, float):
-            raise TypeError(f"Dropout rate must be a float, but got {type(dropout_rate)}")
+            raise TypeError(f"Dropout rate must be a float, but got {type(dropout_rate)}.")
         if d_model % heads_count != 0:
             raise ValueError(f"d_model ({d_model}) must be divisible by heads_count ({heads_count}).")
 
