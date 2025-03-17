@@ -23,16 +23,16 @@ class MultiHeadedAttention(nn.Module):
         if d_model % heads_count != 0:
             raise ValueError(f"d_model ({d_model}) must be divisible by heads_count ({heads_count}).")
 
-        self._d_k = d_model // heads_count
-        self._heads_count = heads_count
-        self._attention = ScaledDotProductAttention(dropout_rate)
-        self._attn_probs = None
+        self.__d_k = d_model // heads_count
+        self.__heads_count = heads_count
+        self.__attention = ScaledDotProductAttention(dropout_rate)
+        self.__attn_probs = None
 
         # Linear layers for projecting the query, key, value, and output
-        self._w_q = nn.Linear(d_model, d_model)
-        self._w_k = nn.Linear(d_model, d_model)
-        self._w_v = nn.Linear(d_model, d_model)
-        self._w_o = nn.Linear(d_model, d_model)
+        self.__w_q = nn.Linear(d_model, d_model)
+        self.__w_k = nn.Linear(d_model, d_model)
+        self.__w_v = nn.Linear(d_model, d_model)
+        self.__w_o = nn.Linear(d_model, d_model)
 
     def forward(
         self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, mask: torch.Tensor | None = None
@@ -59,16 +59,16 @@ class MultiHeadedAttention(nn.Module):
         # 1) Project the query, key, and value tensors through their respective linear layers.
         # 2) Split the results into `heads_count` heads.
         # 3) Transpose the results to have shape (batch_size, num_heads, seq_len, d_k).
-        query = self._w_q(query).view(nbatches, -1, self._heads_count, self._d_k).transpose(1, 2)
-        key = self._w_k(key).view(nbatches, -1, self._heads_count, self._d_k).transpose(1, 2)
-        value = self._w_v(value).view(nbatches, -1, self._heads_count, self._d_k).transpose(1, 2)
+        query = self.__w_q(query).view(nbatches, -1, self.__heads_count, self.__d_k).transpose(1, 2)
+        key = self.__w_k(key).view(nbatches, -1, self.__heads_count, self.__d_k).transpose(1, 2)
+        value = self.__w_v(value).view(nbatches, -1, self.__heads_count, self.__d_k).transpose(1, 2)
 
         # Apply the Scaled Dot-Product Attention to the projected and split queries, keys, and values.
-        x, self._attn_probs = self._attention(query, key, value, mask)
+        x, self.__attn_probs = self.__attention(query, key, value, mask)
 
         # 1) Transpose back.
         # 2) Concatenate the heads.
         # 3) Apply the final linear layer.
-        x = x.transpose(1, 2).contiguous().view(nbatches, -1, self._heads_count * self._d_k)
-        x = self._w_o(x)
+        x = x.transpose(1, 2).contiguous().view(nbatches, -1, self.__heads_count * self.__d_k)
+        x = self.__w_o(x)
         return x

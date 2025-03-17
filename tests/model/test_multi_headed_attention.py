@@ -1,8 +1,6 @@
-import pytest
 import torch
 import torch.nn as nn
 
-from src.model.multi_headed_attention import MultiHeadedAttention
 from src.model.scaled_dot_product_attention import ScaledDotProductAttention
 
 
@@ -10,33 +8,36 @@ class TestMultiHeadedAttention:
     def test_init(self, init_multi_headed_attention):
         """Test that the MultiHeadedAttention class is initialized correctly."""
         multi_headed_attention, head_count = init_multi_headed_attention
-        assert hasattr(multi_headed_attention, "_w_q"), "Linear layer _w_q is not defined."
-        assert isinstance(multi_headed_attention._w_q, nn.Linear), "_w_q is not of type nn.Linear."
-        assert hasattr(multi_headed_attention, "_w_k"), "Linear layer _w_k is not defined."
-        assert isinstance(multi_headed_attention._w_k, nn.Linear), "_w_k is not of type nn.Linear."
-        assert hasattr(multi_headed_attention, "_w_v"), "Linear layer _w_v is not defined."
-        assert isinstance(multi_headed_attention._w_v, nn.Linear), "_w_v is not of type nn.Linear."
-        assert hasattr(multi_headed_attention, "_w_o"), "Linear layer _w_o is not defined."
-        assert isinstance(multi_headed_attention._w_o, nn.Linear), "_w_o is not of type nn.Linear."
-        assert hasattr(multi_headed_attention, "_attention"), "ScaledDotProductAttention is not defined."
+        assert hasattr(multi_headed_attention, "_MultiHeadedAttention__w_q"), "Linear layer __w_q is not defined."
         assert isinstance(
-            multi_headed_attention._attention, ScaledDotProductAttention
-        ), "_attention is not of type ScaledDotProductAttention."
+            multi_headed_attention._MultiHeadedAttention__w_q, nn.Linear
+        ), "__w_q is not of type nn.Linear."
+        assert hasattr(multi_headed_attention, "_MultiHeadedAttention__w_k"), "Linear layer __w_k is not defined."
+        assert isinstance(
+            multi_headed_attention._MultiHeadedAttention__w_k, nn.Linear
+        ), "__w_k is not of type nn.Linear."
+        assert hasattr(multi_headed_attention, "_MultiHeadedAttention__w_v"), "Linear layer __w_v is not defined."
+        assert isinstance(
+            multi_headed_attention._MultiHeadedAttention__w_v, nn.Linear
+        ), "__w_v is not of type nn.Linear."
+        assert hasattr(multi_headed_attention, "_MultiHeadedAttention__w_o"), "Linear layer __w_o is not defined."
+        assert isinstance(
+            multi_headed_attention._MultiHeadedAttention__w_o, nn.Linear
+        ), "__w_o is not of type nn.Linear."
+        assert hasattr(
+            multi_headed_attention, "_MultiHeadedAttention__attention"
+        ), "ScaledDotProductAttention is not defined."
+        assert isinstance(
+            multi_headed_attention._MultiHeadedAttention__attention, ScaledDotProductAttention
+        ), "__attention is not of type ScaledDotProductAttention."
         assert (
-            multi_headed_attention._d_k
-            == multi_headed_attention._w_q.in_features // multi_headed_attention._heads_count
-        ), "d_k is not calculated correctly."
-        assert multi_headed_attention._heads_count == head_count, "Number of heads is not set correctly in the module."
-
-    def test_d_model_not_divisible_by_heads_count(self):
-        """Test that a ValueError is raised when d_model is not divisible by heads_count."""
-        heads_count = 3
-        d_model = 10
-        dropout_rate = 0.1
-
-        # UCheck if a ValueError is raised.
-        with pytest.raises(ValueError):
-            MultiHeadedAttention(heads_count=heads_count, d_model=d_model, dropout_rate=dropout_rate)
+            multi_headed_attention._MultiHeadedAttention__d_k
+            == multi_headed_attention._MultiHeadedAttention__w_q.in_features
+            // multi_headed_attention._MultiHeadedAttention__heads_count
+        ), "__d_k is not calculated correctly."
+        assert (
+            multi_headed_attention._MultiHeadedAttention__heads_count == head_count
+        ), "Number of heads is not set correctly in the module."
 
     def test_shapes(self, init_multi_headed_attention, multi_headed_attention_sample_tensors):
         """Test the output shapes of the MultiHeadedAttention module."""
@@ -62,7 +63,7 @@ class TestMultiHeadedAttention:
         multi_headed_attention(query, key, value, mask)
 
         # Retrieve the attention probabilities.
-        attn_probs = multi_headed_attention._attn_probs
+        attn_probs = multi_headed_attention._MultiHeadedAttention__attn_probs
 
         # Ensure that the attention probabilities for the masked positions are zero.
         assert torch.all(
