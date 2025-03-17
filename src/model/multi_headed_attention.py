@@ -34,7 +34,7 @@ class MultiHeadedAttention(nn.Module):
         self.__attention = ScaledDotProductAttention(dropout_rate)
         self.__attn_probs = None
 
-        # Linear layers for projecting the query, key, value, and output
+        # Linear layers for projecting the query, key, value, and output.
         self.__w_q = nn.Linear(d_model, d_model)
         self.__w_k = nn.Linear(d_model, d_model)
         self.__w_v = nn.Linear(d_model, d_model)
@@ -46,11 +46,11 @@ class MultiHeadedAttention(nn.Module):
         """
         Computes the multi-headed attention output.
 
-        :param query: Query tensor. Shape: (batch_size, seq_len_q, d_model)
+        :param query: Query tensor. Shape: (batch_size, seq_len_q, d_model).
                       seq_len_q - sequence length of the query tensor.
-        :param key: Key tensor. Shape: (batch_size, seq_len_k, d_model)
+        :param key: Key tensor. Shape: (batch_size, seq_len_k, d_model).
                     seq_len_k - sequence length of the key tensor.
-        :param value: Value tensor. Shape: (batch_size, seq_len_v, d_model)
+        :param value: Value tensor. Shape: (batch_size, seq_len_v, d_model).
                       seq_len_v - sequence length of the value tensor.
         :param mask: Optional mask to prevent certain positions from attending.
                      Shape: (batch_size, 1, seq_len_q, seq_len_k). Use 1 for values we don't want to mask.
