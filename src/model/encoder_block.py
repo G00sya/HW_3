@@ -22,6 +22,19 @@ class EncoderBlock(nn.Module):
         """
         super().__init__()
 
+        if not isinstance(size, int):
+            raise TypeError(f"Size must be an int, but got {type(size)}")
+        if size <= 0:
+            raise ValueError(f"Size must be a positive number, but got {size}")
+        if not isinstance(dropout_rate, float) and not isinstance(dropout_rate, int):
+            raise TypeError(f"Dropout_rate must be a float or int, but got {type(dropout_rate)}")
+        if not 0 <= dropout_rate <= 1:
+            raise ValueError(f"Dropout_rate must be between 0 and 1, but got {dropout_rate}")
+        if not isinstance(self_attn, nn.Module):
+            raise TypeError(f"self_attn must be an nn.Module, but got {type(self_attn)}")
+        if not isinstance(feed_forward, nn.Module):
+            raise TypeError(f"feed_forward must be an nn.Module, but got {type(feed_forward)}")
+
         self.__self_attn = self_attn
         self.__feed_forward = feed_forward
         self.__self_attention_block = ResidualBlock(size, dropout_rate)
@@ -36,5 +49,10 @@ class EncoderBlock(nn.Module):
 
         :return: Output tensor. Shape: (batch_size, seq_len, size)
         """
+        if not isinstance(inputs, torch.Tensor):
+            raise TypeError(f"Inputs must be a torch.Tensor, but got {type(inputs)}")
+        if not isinstance(mask, torch.Tensor):
+            raise TypeError(f"Mask must be an torch.Tensor, but got {type(mask)}")
+
         outputs = self.__self_attention_block(inputs, LambdaWrapper(lambda x: self.__self_attn(x, x, x, mask)))
         return self.__feed_forward_block(outputs, self.__feed_forward)
