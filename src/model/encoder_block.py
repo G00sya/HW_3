@@ -21,19 +21,45 @@ class EncoderBlock(nn.Module):
         """
         super().__init__()
 
-        self._self_attn = self_attn
-        self._feed_forward = feed_forward
-        self._self_attention_block = ResidualBlock(size, dropout_rate)
-        self._feed_forward_block = ResidualBlock(size, dropout_rate)
+        self.__self_attn = self_attn
+        self.__feed_forward = feed_forward
+        self.__self_attention_block = ResidualBlock(size, dropout_rate)
+        self.__feed_forward_block = ResidualBlock(size, dropout_rate)
 
     def forward(self, inputs: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         """
         Computes the output of the EncoderBlock.
 
         :param inputs: Input tensor. Shape: (batch_size, seq_len, size)
-        :param mask: Mask to apply to the self-attention mechanism. Shape: (batch_size, 1, seq_len, seq_len)
+        :param mask: Mask to apply to the self-attention mechanism. Shape: (batch_size, seq_len, seq_len)
 
         :return: Output tensor. Shape: (batch_size, seq_len, size)
         """
-        outputs = self._self_attention_block(inputs, lambda inputs: self._self_attn(inputs, inputs, inputs, mask))
-        return self._feed_forward_block(outputs, self._feed_forward)
+        outputs = self.__self_attention_block(inputs, LambdaWrapper(lambda x: self.__self_attn(x, x, x, mask)))
+        return self.__feed_forward_block(outputs, self.__feed_forward)
+
+
+class LambdaWrapper(nn.Module):
+    """
+    A PyTorch Module wrapper for lambda functions to enable compatibility with ResidualBlock.
+    """
+
+    def __init__(self, lambda_func):
+        """Initializes the LambdaWrapper with a callable function.
+
+        :param lambda_func: Function to wrap. Must accept a tensor and return a tensor.
+        """
+        super().__init__()
+        self.lambda_func = lambda_func
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Executes the wrapped function on the input tensor.
+
+        :param x: Input tensor of shape (*, d_model) where d_model is the feature dimension.
+
+        :return: Transformed output tensor of same shape as input.
+
+        Note:
+            The input will typically be layer-normalized when used with ResidualBlock.
+        """
+        return self.lambda_func(x)
