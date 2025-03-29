@@ -37,8 +37,7 @@ class ScaledDotProductAttention(nn.Module):
                     seq_len_k - sequence length of key.
         :param value: Value tensor. Shape: (batch_size, num_heads, seq_len_k, d_v)  d_v might be d_k sometimes.
         :param mask: Optional mask to block certain positions from attending.
-                     Shape: (batch_size, 1, seq_len_q, seq_len_k) or (1, 1, seq_len_q, seq_len_k).
-                     Use 1 for values we don't want to mask.
+                     Shape: (batch_size, 1, seq_len_q, seq_len_k). Use 1 for values we don't want to mask.
 
         :return: A tuple containing:
             - The weighted values (attention output). Shape: (batch_size, num_heads, seq_len_q, d_v).
