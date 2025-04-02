@@ -48,7 +48,7 @@ class TestPositionwiseFeedForward:
         seq_len = 10
 
         ffn.train()
-        inputs = torch.ones(batch_size, seq_len, d_model)
+        inputs = torch.randn(batch_size, seq_len, d_model)
         output_train = ffn(inputs)
 
         num_zeros_train = torch.sum(output_train == 0).item()
