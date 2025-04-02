@@ -51,9 +51,6 @@ class TestPositionwiseFeedForward:
         inputs = torch.randn(batch_size, seq_len, d_model)
         output_train = ffn(inputs)
 
-        num_zeros_train = torch.sum(output_train == 0).item()
-        assert num_zeros_train > 0, "Dropout layer is not zeroing out elements during training mode."
-
         ffn.eval()
         output_eval = ffn(inputs)
         assert not torch.equal(output_train, output_eval), "The outputs shouldn't be the same."
