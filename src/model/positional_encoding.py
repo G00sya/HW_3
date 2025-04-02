@@ -6,6 +6,13 @@ import torch.nn as nn
 
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, dropout: float, max_len: int = 5000):
+        """
+        Initializes the PositionalEncoding module.
+        Computes the positional encodings once in log space, and then stores them.
+        :param d_model: the dimension of the model (embedding size).
+        :param dropout: the dropout value.
+        :param max_len: the maximum length of the input sequence.
+        """
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
 
