@@ -11,7 +11,7 @@ class EncoderBlock(nn.Module):
     This is a standard building block in Transformer encoder architectures.
     """
 
-    def __init__(self, size: int, self_attn: nn.Module, feed_forward: nn.Module, dropout_rate: float):
+    def __init__(self, size: int, self_attn: nn.Module, feed_forward: nn.Module, dropout_rate: float | int):
         """
         Initializes the EncoderBlock module.
 
