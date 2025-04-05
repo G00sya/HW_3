@@ -2,6 +2,7 @@ import pytest
 import torch
 
 from src.model.layer_norm import LayerNorm
+from src.model.positionwise_feed_forward import PositionwiseFeedForward
 from src.model.residual_block import ResidualBlock
 from src.model.scaled_dot_product_attention import ScaledDotProductAttention
 
@@ -47,3 +48,16 @@ def scaled_dot_product_attention_sample_tensors() -> tuple[torch.Tensor, torch.T
     key = torch.randn(batch_size, num_heads, seq_len_k, d_k)
     value = torch.randn(batch_size, num_heads, seq_len_k, d_v)
     return query, key, value
+
+
+@pytest.fixture
+def init_positionwise_feed_forward() -> (PositionwiseFeedForward, torch.Tensor):
+    d_model = 512
+    d_ff = 2048
+    dropout = 0.1
+    batch_size = 32
+    seq_len = 10
+
+    ffn = PositionwiseFeedForward(d_model, d_ff, dropout)
+    inputs = torch.randn(batch_size, seq_len, d_model)
+    return ffn, inputs

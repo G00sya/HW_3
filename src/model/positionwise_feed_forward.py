@@ -23,9 +23,9 @@ class PositionwiseFeedForward(nn.Module):
         if not 0 <= dropout <= 1:
             raise ValueError(f"Dropout rate must be between 0 and 1, but got {dropout}.")
 
-        self.__w_1 = nn.Linear(d_model, d_ff)
-        self.__w_2 = nn.Linear(d_ff, d_model)
-        self.__dropout = nn.Dropout(dropout)
+        self._w_1 = nn.Linear(d_model, d_ff)
+        self._w_2 = nn.Linear(d_ff, d_model)
+        self._dropout = nn.Dropout(dropout)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """
@@ -33,4 +33,4 @@ class PositionwiseFeedForward(nn.Module):
         :param inputs: Input tensor of shape (batch_size, seq_len, d_model).
         :return: Output tensor of shape (batch_size, seq_len, d_model).
         """
-        return self.__w_2(self.__dropout(F.relu(self.__w_1(inputs))))
+        return self._w_2(self._dropout(F.relu(self._w_1(inputs))))

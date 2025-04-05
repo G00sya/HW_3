@@ -1,21 +1,7 @@
-import pytest
 import torch
 import torch.nn as nn
 
 from src.model.positionwise_feed_forward import PositionwiseFeedForward
-
-
-@pytest.fixture
-def init_positionwise_feed_forward():
-    d_model = 512
-    d_ff = 2048
-    dropout = 0.1
-    batch_size = 32
-    seq_len = 10
-
-    ffn = PositionwiseFeedForward(d_model, d_ff, dropout)
-    inputs = torch.randn(batch_size, seq_len, d_model)
-    return ffn, inputs
 
 
 class TestPositionwiseFeedForward:
@@ -26,15 +12,15 @@ class TestPositionwiseFeedForward:
 
         ffn = PositionwiseFeedForward(d_model, d_ff, dropout)
 
-        assert isinstance(ffn.w_1, nn.Linear)
-        assert isinstance(ffn.w_2, nn.Linear)
-        assert isinstance(ffn.dropout, nn.Dropout)
+        assert isinstance(ffn._w_1, nn.Linear)
+        assert isinstance(ffn._w_2, nn.Linear)
+        assert isinstance(ffn._dropout, nn.Dropout)
 
-        assert ffn.w_1.in_features == d_model
-        assert ffn.w_1.out_features == d_ff
-        assert ffn.w_2.in_features == d_ff
-        assert ffn.w_2.out_features == d_model
-        assert ffn.dropout.p == dropout
+        assert ffn._w_1.in_features == d_model
+        assert ffn._w_1.out_features == d_ff
+        assert ffn._w_2.in_features == d_ff
+        assert ffn._w_2.out_features == d_model
+        assert ffn._dropout.p == dropout
 
     def test_forward(self, init_positionwise_feed_forward) -> None:
         ffn, inputs = init_positionwise_feed_forward
@@ -47,7 +33,6 @@ class TestPositionwiseFeedForward:
         batch_size = 32
         seq_len = 10
 
-        ffn.train()
         inputs = torch.randn(batch_size, seq_len, d_model)
         output_train = ffn(inputs)
 
