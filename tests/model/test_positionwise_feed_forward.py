@@ -1,3 +1,4 @@
+import pytest
 import torch
 import torch.nn as nn
 
@@ -39,3 +40,30 @@ class TestPositionwiseFeedForward:
         ffn.eval()
         output_eval = ffn(inputs)
         assert not torch.equal(output_train, output_eval), "The outputs shouldn't be the same."
+
+    def test_valid_initialization(self):
+        """Тест успешной инициализации."""
+        ffn = PositionwiseFeedForward(d_model=512, d_ff=2048, dropout=0.1)
+        assert isinstance(ffn._w_1, nn.Linear)
+        assert isinstance(ffn._w_2, nn.Linear)
+        assert isinstance(ffn._dropout, nn.Dropout)
+
+    def test_invalid_d_model_type(self):
+        """Тест для неверного типа d_model."""
+        with pytest.raises(TypeError, match="must be an int"):
+            PositionwiseFeedForward(d_model="512", d_ff=2048, dropout=0.1)
+
+    def test_invalid_d_ff_type(self):
+        """Тест для неверного типа d_ff."""
+        with pytest.raises(TypeError, match="must be an int"):
+            PositionwiseFeedForward(d_model=512, d_ff="2048", dropout=0.1)
+
+    def test_invalid_dropout_type(self):
+        """Тест для неверного типа dropout."""
+        with pytest.raises(TypeError, match="must be a float or an int"):
+            PositionwiseFeedForward(d_model=512, d_ff=2048, dropout="0.1")
+
+    def test_invalid_dropout_value(self):
+        """Тест для неверного значения dropout (вне диапазона 0-1)."""
+        with pytest.raises(ValueError, match="must be between 0 and 1"):
+            PositionwiseFeedForward(d_model=512, d_ff=2048, dropout=1.1)
