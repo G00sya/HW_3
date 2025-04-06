@@ -10,7 +10,7 @@ class ScaledDotProductAttention(nn.Module):
     Scaled Dot-Product Attention mechanism. This is a core building block of the Transformer architecture.
     """
 
-    def __init__(self, dropout_rate: float):
+    def __init__(self, dropout_rate: float | int):
         """
         Initializes the attention module.
 
@@ -18,8 +18,10 @@ class ScaledDotProductAttention(nn.Module):
         """
         super().__init__()
 
-        if not isinstance(dropout_rate, float):
-            raise TypeError(f"Dropout rate must be a float, but got {type(dropout_rate)}")
+        if not isinstance(dropout_rate, float) and not isinstance(dropout_rate, int):
+            raise TypeError(f"Dropout_rate must be a float or int, but got {type(dropout_rate)}")
+        if not 0 <= dropout_rate <= 1:
+            raise ValueError(f"Dropout_rate must be between 0 and 1, but got {dropout_rate}")
 
         self.__dropout = nn.Dropout(dropout_rate)
 
@@ -35,8 +37,7 @@ class ScaledDotProductAttention(nn.Module):
                     seq_len_k - sequence length of key.
         :param value: Value tensor. Shape: (batch_size, num_heads, seq_len_k, d_v)  d_v might be d_k sometimes.
         :param mask: Optional mask to block certain positions from attending.
-                     Shape: (batch_size, 1, seq_len_q, seq_len_k) or (1, 1, seq_len_q, seq_len_k).
-                     Use 1 for values we don't want to mask.
+                     Shape: (batch_size, 1, seq_len_q, seq_len_k). Use 1 for values we don't want to mask.
 
         :return: A tuple containing:
             - The weighted values (attention output). Shape: (batch_size, num_heads, seq_len_q, d_v).

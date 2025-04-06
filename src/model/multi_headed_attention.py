@@ -55,13 +55,13 @@ class MultiHeadedAttention(nn.Module):
         :param value: Value tensor. Shape: (batch_size, seq_len_v, d_model).
                       seq_len_v - sequence length of the value tensor.
         :param mask: Optional mask to prevent certain positions from attending.
-                     Shape: (batch_size, 1, seq_len_q, seq_len_k). Use 1 for values we don't want to mask.
+                     Shape: (batch_size, seq_len_q, seq_len_k). Use 1 for values we don't want to mask.
 
         :return: Multi-headed attention output. Shape: (batch_size, seq_len_q, d_model).
         """
+        # Add an extra dimension to the mask tensor so it can be easily applied across all attention heads.
         if mask is not None:
-            mask = mask.unsqueeze(1)  # Add an extra dimension to the mask tensor so it can be easily applied across.
-            # all attention heads. Now: (batch_size, 1, 1, seq_len_k).
+            mask = mask.unsqueeze(1)  # Now: (batch_size, 1, seq_len_q, seq_len_k).
         nbatches = query.size(0)  # Batch size.
 
         # 1) Project the query, key, and value tensors through their respective linear layers.
