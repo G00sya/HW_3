@@ -85,6 +85,8 @@ def init_positional_encoding() -> (PositionalEncoding, int, float, int):
     max_len = 100
     return PositionalEncoding(d_model, dropout, max_len), d_model, dropout, max_len
 
+
+@pytest.fixture
 def init_encoder_block() -> EncoderBlock:
     size = 64
     heads_count = 8
