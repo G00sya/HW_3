@@ -65,6 +65,7 @@ def init_positionwise_feed_forward() -> (PositionwiseFeedForward, torch.Tensor):
     return ffn, inputs
 
 
+@pytest.fixture()
 def init_multi_headed_attention() -> tuple[MultiHeadedAttention, int]:
     heads_count = 8
     d_model = 64
