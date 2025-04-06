@@ -3,8 +3,8 @@ import torch
 
 from src.model.encoder_block import EncoderBlock
 from src.model.layer_norm import LayerNorm
-from src.model.positionwise_feed_forward import PositionwiseFeedForward
 from src.model.multi_headed_attention import MultiHeadedAttention
+from src.model.positionwise_feed_forward import PositionwiseFeedForward
 from src.model.residual_block import ResidualBlock
 from src.model.scaled_dot_product_attention import ScaledDotProductAttention
 
@@ -63,6 +63,7 @@ def init_positionwise_feed_forward() -> (PositionwiseFeedForward, torch.Tensor):
     ffn = PositionwiseFeedForward(d_model, d_ff, dropout)
     inputs = torch.randn(batch_size, seq_len, d_model)
     return ffn, inputs
+
 
 def init_multi_headed_attention() -> tuple[MultiHeadedAttention, int]:
     heads_count = 8
