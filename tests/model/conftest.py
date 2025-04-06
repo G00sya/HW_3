@@ -84,7 +84,7 @@ def init_encoder_block() -> EncoderBlock:
 
 
 @pytest.fixture
-def sample_tensors() -> tuple[torch.Tensor, torch.Tensor]:
+def encoder_block_sample_tensors() -> tuple[torch.Tensor, torch.Tensor]:
     batch_size = 2
     seq_len = 10
     size = 64
