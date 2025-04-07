@@ -26,27 +26,20 @@ class TestPositionalEncoding:
         Test the forward pass of the PositionalEncoding module.
         Checks if the output tensor has the correct shape and if the positional encodings are added correctly.
         """
-        pe, d_model, dropout, max_len = init_positional_encoding
-        batch_size = 32
-        seq_len = 50
-
-        inputs = torch.randn(batch_size, seq_len, d_model)
+        pe, d_model, dropout, max_len, inputs = init_positional_encoding
 
         output = pe(inputs)
 
-        assert output.shape == (batch_size, seq_len, d_model)
+        assert output.shape == (inputs.shape[0], inputs.shape[1], d_model)
         assert not torch.equal(inputs, output)
 
     def test_dropout_effect(self, init_positional_encoding) -> None:
         """
         Test that dropout layer is actually applied
         """
-        pe, d_model, dropout, max_len = init_positional_encoding
-        batch_size = 32
-        seq_len = 50
+        pe, d_model, dropout, max_len, inputs = init_positional_encoding
 
         pe.train()
-        inputs = torch.randn(batch_size, seq_len, d_model)
 
         output_train = pe(inputs)
         num_zeros_train = torch.sum(torch.abs(output_train) < 1e-6).item()

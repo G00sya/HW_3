@@ -82,4 +82,9 @@ def init_positional_encoding() -> (PositionalEncoding, int, float, int):
     d_model = 512
     dropout = 0.1
     max_len = 100
-    return PositionalEncoding(d_model, dropout, max_len), d_model, dropout, max_len
+
+    batch_size = 32
+    seq_len = 50
+
+    inputs = torch.randn(batch_size, seq_len, d_model)
+    return PositionalEncoding(d_model, dropout, max_len), d_model, dropout, max_len, inputs
