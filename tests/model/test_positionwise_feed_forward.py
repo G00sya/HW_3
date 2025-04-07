@@ -29,12 +29,8 @@ class TestPositionwiseFeedForward:
         assert output.shape == inputs.shape
 
     def test_dropout_effect(self, init_positionwise_feed_forward) -> None:
-        ffn, _ = init_positionwise_feed_forward
-        d_model = 512
-        batch_size = 32
-        seq_len = 10
+        ffn, inputs = init_positionwise_feed_forward
 
-        inputs = torch.randn(batch_size, seq_len, d_model)
         output_train = ffn(inputs)
 
         ffn.eval()
