@@ -1,6 +1,7 @@
 import pytest
 import torch
 
+from src.model.encoder_block import EncoderBlock
 from src.model.layer_norm import LayerNorm
 from src.model.multi_headed_attention import MultiHeadedAttention
 from src.model.positional_encoding import PositionalEncoding
@@ -82,9 +83,30 @@ def init_positional_encoding() -> (PositionalEncoding, int, float, int):
     d_model = 512
     dropout = 0.1
     max_len = 100
-
     batch_size = 32
     seq_len = 50
 
     inputs = torch.randn(batch_size, seq_len, d_model)
     return PositionalEncoding(d_model, dropout, max_len), d_model, dropout, max_len, inputs
+
+
+@pytest.fixture
+def init_encoder_block() -> EncoderBlock:
+    size = 64
+    heads_count = 8
+    dropout_rate = 0.1
+
+    self_attn = MultiHeadedAttention(heads_count=heads_count, d_model=size, dropout_rate=dropout_rate)
+    feed_forward = torch.nn.Linear(size, size)
+    return EncoderBlock(size=size, self_attn=self_attn, feed_forward=feed_forward, dropout_rate=dropout_rate)
+
+
+@pytest.fixture
+def sample_tensors() -> tuple[torch.Tensor, torch.Tensor]:
+    batch_size = 2
+    seq_len = 10
+    size = 64
+
+    inputs = torch.randn(batch_size, seq_len, size)
+    mask = torch.ones(batch_size, seq_len, seq_len)
+    return inputs, mask
