@@ -9,7 +9,7 @@ readme = "README.md"
 python = "^3.12"
 numpy = "^2.2.3"
 torch = "^2.6.0"
-torchtext = "^0.18.0"
+torchtext = "0.6.0"
 pandas = "^2.2.3"
 
 [tool.poetry.group.dev.dependencies]
@@ -42,6 +42,7 @@ omit = [
     "**/config/*.py",
     "**/tests/*.py",
     "**/sandbox.py",
+    "**/logger.py"
 ]
 
 [tool.coverage.report]
