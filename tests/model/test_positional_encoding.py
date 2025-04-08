@@ -17,8 +17,8 @@ class TestPositionalEncoding:
 
         pe = PositionalEncoding(d_model, dropout, max_len)
 
-        assert isinstance(pe.dropout, nn.Dropout)
-        assert pe.dropout.p == dropout
+        assert isinstance(pe._PositionalEncoding__dropout, nn.Dropout)
+        assert pe._PositionalEncoding__dropout.p == dropout
         assert pe.pe.shape == (1, max_len, d_model)
 
     def test_forward(self, init_positional_encoding) -> None:
@@ -49,7 +49,7 @@ class TestPositionalEncoding:
     def test_valid_initialization(self):
         """Test successful initialization."""
         pe = PositionalEncoding(d_model=512, dropout=0.1, max_len=100)
-        assert isinstance(pe.dropout, nn.Dropout)
+        assert isinstance(pe._PositionalEncoding__dropout, nn.Dropout)
 
     def test_invalid_d_model_type(self):
         """Test for invalid d_model type."""

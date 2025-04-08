@@ -24,7 +24,7 @@ class PositionalEncoding(nn.Module):
         if not 0 <= dropout <= 1:
             raise ValueError(f"Dropout rate must be between 0 and 1, but got {dropout}.")
 
-        self.dropout = nn.Dropout(p=dropout)
+        self.__dropout = nn.Dropout(p=dropout)
 
         # Create a tensor (matrix) to store positional encodings
         pe = torch.zeros(max_len, d_model)
@@ -57,4 +57,4 @@ class PositionalEncoding(nn.Module):
         x = x + self.pe[:, : x.size(1)]
 
         # Apply Dropout
-        return self.dropout(x)
+        return self.__dropout(x)
