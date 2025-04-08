@@ -1023,6 +1023,20 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "sacremoses"
+version = "0.0.5"
+description = "SacreMoses"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "sacremoses-0.0.5.tar.gz", hash = "sha256:0fbad68d2cf16becfc0d32d7697e1339dd34216f75ccb3c40bb883b1b3d08118"},
+]
+
+[package.dependencies]
+six = "*"
+
+[[package]]
 name = "sentencepiece"
 version = "0.2.0"
 description = "SentencePiece python wrapper"
@@ -1322,4 +1336,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "480febd93e3ce935de85e0ba31fbc9ba71c34b44f51be6bed6b2d9a605e5e84c"
+content-hash = "689cbb1accc05e7630c3c743ed46ced3b3edc3ae290cf9bfeff9c2084f74cdf1"
