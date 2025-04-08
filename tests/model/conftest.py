@@ -2,6 +2,7 @@ import pytest
 import torch
 
 from src.model.encoder_block import EncoderBlock
+from src.model.generator import Generator
 from src.model.layer_norm import LayerNorm
 from src.model.multi_headed_attention import MultiHeadedAttention
 from src.model.positional_encoding import PositionalEncoding
@@ -124,3 +125,19 @@ def sample_tensors() -> tuple[torch.Tensor, torch.Tensor]:
     inputs = torch.randn(batch_size, seq_len, size)
     mask = torch.ones(batch_size, seq_len, seq_len)
     return inputs, mask
+
+
+@pytest.fixture()
+def init_generator() -> (Generator, int, int):
+    d_model = 512
+    target_vocab_size = 10000
+    generator = Generator(d_model, target_vocab_size)
+    return generator, d_model, target_vocab_size
+
+
+@pytest.fixture()
+def init_input_for_generator(init_generator) -> torch.tensor:
+    _, d_model, _ = init_generator
+    batch_size = 32
+    x = torch.randn(batch_size, d_model)
+    return x
