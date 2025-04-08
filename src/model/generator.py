@@ -13,6 +13,11 @@ class Generator(nn.Module):
         :param d_model: Dimensionality of embedding.
         :param target_vocab_size: Size of vocabulary of resulted text.
         """
+        if not isinstance(d_model, int):
+            raise TypeError(f"Expected d_model to be of type int, but got {type(d_model).__name__}")
+        if not isinstance(target_vocab_size, int):
+            raise TypeError(f"Expected target_vocab_size to be of type int, but got {type(target_vocab_size).__name__}")
+
         super(Generator, self).__init__()
         self.__proj = nn.Linear(d_model, target_vocab_size)
 

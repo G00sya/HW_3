@@ -1,3 +1,4 @@
+import pytest
 import torch
 import torch.nn as nn
 
@@ -14,6 +15,26 @@ class TestGenerator:
         assert isinstance(generator._Generator__proj, nn.Linear)
         assert generator._Generator__proj.in_features == 512
         assert generator._Generator__proj.out_features == 10000
+
+    def test_generator_init_invalid_d_model(self):
+        """
+        Test with invalid d_model type (str).
+        """
+        d_model = "512"
+        target_vocab_size = 10000
+
+        with pytest.raises(TypeError, match="Expected d_model to be of type int, but got str"):
+            Generator(d_model, target_vocab_size)
+
+    def test_generator_init_invalid_target_vocab_size(self):
+        """
+        Test with invalid target_vocab_size type (str).
+        """
+        d_model = 512
+        target_vocab_size = "10000"
+
+        with pytest.raises(TypeError, match="Expected target_vocab_size to be of type int, but got str"):
+            Generator(d_model, target_vocab_size)
 
     def test_forward_pass(self, init_generator, init_input_for_generator):
         """
