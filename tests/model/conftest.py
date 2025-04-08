@@ -4,6 +4,7 @@ import torch
 from src.model.encoder_block import EncoderBlock
 from src.model.layer_norm import LayerNorm
 from src.model.multi_headed_attention import MultiHeadedAttention
+from src.model.positionwise_feed_forward import PositionwiseFeedForward
 from src.model.residual_block import ResidualBlock
 from src.model.scaled_dot_product_attention import ScaledDotProductAttention
 
@@ -52,6 +53,19 @@ def scaled_dot_product_attention_sample_tensors() -> tuple[torch.Tensor, torch.T
 
 
 @pytest.fixture
+def init_positionwise_feed_forward() -> (PositionwiseFeedForward, torch.Tensor):
+    d_model = 512
+    d_ff = 2048
+    dropout = 0.1
+    batch_size = 32
+    seq_len = 10
+
+    ffn = PositionwiseFeedForward(d_model, d_ff, dropout)
+    inputs = torch.randn(batch_size, seq_len, d_model)
+    return ffn, inputs
+
+
+@pytest.fixture()
 def init_multi_headed_attention() -> tuple[MultiHeadedAttention, int]:
     heads_count = 8
     d_model = 64
