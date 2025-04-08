@@ -4,6 +4,7 @@ import torch
 from src.model.encoder_block import EncoderBlock
 from src.model.layer_norm import LayerNorm
 from src.model.multi_headed_attention import MultiHeadedAttention
+from src.model.positional_encoding import PositionalEncoding
 from src.model.positionwise_feed_forward import PositionwiseFeedForward
 from src.model.residual_block import ResidualBlock
 from src.model.scaled_dot_product_attention import ScaledDotProductAttention
@@ -84,6 +85,23 @@ def multi_headed_attention_sample_tensors() -> tuple[torch.Tensor, torch.Tensor,
     key = torch.randn(batch_size, seq_len_k, d_model)
     value = torch.randn(batch_size, seq_len_k, d_model)
     return query, key, value
+
+
+@pytest.fixture
+def init_positional_encoding() -> (PositionalEncoding, int, float, int):
+    """
+    Initializes the PositionalEncoding module with predefined parameters.
+    :return: Tuple[PositionalEncoding, int, float, int]: A tuple containing an instance of PositionalEncoding,
+    d_model, dropout, and max_len.
+    """
+    d_model = 512
+    dropout = 0.1
+    max_len = 100
+    batch_size = 32
+    seq_len = 50
+
+    inputs = torch.randn(batch_size, seq_len, d_model)
+    return PositionalEncoding(d_model, dropout, max_len), d_model, dropout, max_len, inputs
 
 
 @pytest.fixture
