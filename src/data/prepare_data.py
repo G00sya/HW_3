@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Tuple
 
 import pandas as pd
 from torchtext.data import BucketIterator, Dataset, Example, Field
@@ -62,7 +63,7 @@ class Data:
 
     def init_dataset(
         self, csv_path: str, batch_size: tuple = (16, 32), split_ratio: float = 0.85, min_frequency: float = 0.7
-    ) -> (BucketIterator, BucketIterator) | None:
+    ) -> Tuple[BucketIterator, BucketIterator] | None:
         """
         Initialize train and test BucketIterator from csv file.
 
