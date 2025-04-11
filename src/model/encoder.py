@@ -14,7 +14,7 @@ class Encoder(nn.Module):
     """
 
     def __init__(
-        self, vocab_size: int, d_model: int, d_ff: int, blocks_count: int, heads_count: int, dropout_rate: float
+        self, vocab_size: int, d_model: int, d_ff: int, blocks_count: int, heads_count: int, dropout_rate: float | int
     ):
         """
         Initializes the Encoder.
@@ -28,8 +28,25 @@ class Encoder(nn.Module):
         """
         super().__init__()
 
+        int_params = {
+            "vocab_size": vocab_size,
+            "d_model": d_model,
+            "d_ff": d_ff,
+            "blocks_count": blocks_count,
+            "heads_count": heads_count,
+        }
+        for name, value in int_params.items():
+            if not isinstance(value, int):
+                raise TypeError(f"{name} must be an integer, got {type(value)}")
+            if value <= 0:
+                raise ValueError(f"{name} must be positive, got {value}")
+        if not isinstance(dropout_rate, (float, int)):
+            raise TypeError(f"dropout_rate must be a float or an int, but got {type(dropout_rate)}.")
+        if not (0.0 <= dropout_rate < 1.0):
+            raise ValueError(f"dropout_rate must be in [0.0, 1.0), got {dropout_rate}")
+
         # Embedding layer with positional encoding
-        self._emb = nn.Sequential(
+        self.__emb = nn.Sequential(
             nn.Embedding(vocab_size, d_model),  # Embed tokens into d_model dimensional vectors
             PositionalEncoding(d_model, dropout_rate),  # Add positional information
         )
@@ -42,8 +59,8 @@ class Encoder(nn.Module):
                 dropout_rate=dropout_rate,
             )
 
-        self._blocks = nn.ModuleList([create_encoder_block() for _ in range(blocks_count)])
-        self._norm = LayerNorm(d_model)
+        self.__blocks = nn.ModuleList([create_encoder_block() for _ in range(blocks_count)])
+        self.__norm = LayerNorm(d_model)
 
     def forward(self, inputs: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         """
@@ -54,11 +71,10 @@ class Encoder(nn.Module):
 
         :return: Output tensor of shape (batch_size, sequence_length, d_model).
         """
-        # Apply embedding and positional encoding
-        inputs = self._emb(inputs)
+        inputs = self.__emb(inputs)  # Apply embedding and positional encoding
 
         # Pass through encoder blocks
-        for block in self._blocks:
+        for block in self.__blocks:
             inputs = block(inputs, mask)
 
-        return self._norm(inputs)  # Apply layer normalization
+        return self.__norm(inputs)  # Apply layer normalization
