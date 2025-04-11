@@ -1,6 +1,7 @@
 import pytest
 import torch
 
+from src.model.encoder import Encoder
 from src.model.encoder_block import EncoderBlock
 from src.model.layer_norm import LayerNorm
 from src.model.multi_headed_attention import MultiHeadedAttention
@@ -124,3 +125,21 @@ def encoder_block_sample_tensors() -> tuple[torch.Tensor, torch.Tensor]:
     inputs = torch.randn(batch_size, seq_len, size)
     mask = torch.ones(batch_size, seq_len, seq_len)
     return inputs, mask
+
+
+@pytest.fixture
+def init_encoder() -> Encoder:
+    return Encoder(
+        vocab_size=1000,
+        d_model=512,
+        d_ff=2048,
+        blocks_count=6,
+        heads_count=8,
+        dropout_rate=0.1,
+    )
+
+
+@pytest.fixture
+def encoder_sample_tensors() -> tuple[int, int, torch.Tensor]:
+    batch_size, seq_len = 2, 10
+    return batch_size, seq_len, torch.randint(0, 1000, (batch_size, seq_len))
