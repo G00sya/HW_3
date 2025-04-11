@@ -38,6 +38,14 @@ poetry env use python3.12
 poetry env activate
 ```
 
+Для установки данных для обучения
+```bash
+mkdir -p data/raw
+wget -O data/raw/news.zip -qq --no-check-certificate "https://drive.google.com/uc?export=download&id=1hIVVpBqM6VU4n3ERkKq4tFaH4sKN0Hab"
+unzip data/raw/news.zip -d data/raw
+rm data/raw/news.zip
+```
+
 # Структура проекта
 
 ```
@@ -65,7 +73,7 @@ project_root/
 │
 ├── data/                    # Raw data and processed data
 │   ├── raw/                 # Original, unprocessed data (DVC tracked)
-│   │   ├── original_data.csv
+│   │   ├── news.csv
 │   ├── processed/           # Processed data (DVC tracked)
 │   │   ├── processed_data.csv
 │
