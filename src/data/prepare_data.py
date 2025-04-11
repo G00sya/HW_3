@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Optional, Tuple
 
 import pandas as pd
 from torchtext.data import BucketIterator, Dataset, Example, Field
@@ -16,7 +15,7 @@ class Tokens(Enum):
 
 class Data:
     """
-    Class which init datasets for train and test data. Can download csv file if it is needed.
+    Class which initializes datasets for train and test data. Can download csv file if it is needed.
     """
 
     def __init__(self):
@@ -26,7 +25,7 @@ class Data:
         self.__word_field = Field(tokenize="moses", init_token=Tokens.BOS, eos_token=Tokens.EOS, lower=True)
         self.__fields = [("source", self.__word_field), ("target", self.__word_field)]
 
-    def _get_data_pd(self, csv_path: str) -> Optional[pd.DataFrame]:
+    def _get_data_pd(self, csv_path: str) -> pd.DataFrame | None:
         """
         Try to create pd.Dataframe from csv file or return None if csv doesn't exist.
 
@@ -62,10 +61,10 @@ class Data:
         return train_dataset, test_dataset
 
     def init_dataset(
-        self, csv_path: str, batch_size=(16, 32), split_ratio=0.85, min_frequency=0.7
-    ) -> Optional[Tuple[BucketIterator, BucketIterator]]:
+        self, csv_path: str, batch_size: tuple = (16, 32), split_ratio: float = 0.85, min_frequency: float = 0.7
+    ) -> (BucketIterator, BucketIterator) | None:
         """
-        Init train and test BucketIterator from csv file.
+        Initialize train and test BucketIterator from csv file.
 
         :param csv_path: Full path to csv.
         :param batch_size: Batch size for iterator.
@@ -74,6 +73,8 @@ class Data:
         :return: Train and test BucketIterator or None if file is not found.
         """
         data = self._get_data_pd(csv_path)
+        if data is None:
+            return None
         train_dataset, test_dataset = self._create_datasets(data, split_ratio)
 
         self.__word_field.build_vocab(train_dataset, min_freq=min_frequency)

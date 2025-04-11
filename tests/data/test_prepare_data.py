@@ -4,7 +4,6 @@ import pandas as pd
 import pytest
 from torchtext.data import Dataset
 
-# Assuming the Data class is defined in a module named `data_module`
 from src.data.prepare_data import Data
 
 
