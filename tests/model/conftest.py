@@ -9,6 +9,7 @@ from src.model.positional_encoding import PositionalEncoding
 from src.model.positionwise_feed_forward import PositionwiseFeedForward
 from src.model.residual_block import ResidualBlock
 from src.model.scaled_dot_product_attention import ScaledDotProductAttention
+from src.utils.shared_embedding import SharedEmbedding
 
 
 @pytest.fixture
@@ -128,14 +129,20 @@ def encoder_block_sample_tensors() -> tuple[torch.Tensor, torch.Tensor]:
 
 
 @pytest.fixture
-def init_encoder() -> Encoder:
-    return Encoder(
-        vocab_size=1000,
-        d_model=512,
-        d_ff=2048,
-        blocks_count=6,
-        heads_count=8,
-        dropout_rate=0.1,
+def init_encoder() -> tuple[Encoder, SharedEmbedding, int]:
+    d_model = 512
+    shared_embedding = SharedEmbedding(vocab_size=1000, d_model=d_model)
+    return (
+        Encoder(
+            d_model=d_model,
+            d_ff=2048,
+            blocks_count=6,
+            heads_count=8,
+            dropout_rate=0.1,
+            shared_embedding=shared_embedding,
+        ),
+        shared_embedding,
+        d_model,
     )
 
 

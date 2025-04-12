@@ -8,8 +8,6 @@ class TestEncoder:
     @pytest.mark.parametrize(
         "param, invalid_value, expected_error",
         [
-            ("vocab_size", -1, ValueError),
-            ("vocab_size", "1000", TypeError),
             ("d_model", -10, ValueError),
             ("d_model", 512.0, TypeError),
             ("d_ff", -2048, ValueError),
@@ -21,17 +19,18 @@ class TestEncoder:
             ("dropout_rate", -0.1, ValueError),
             ("dropout_rate", 1.0, ValueError),
             ("dropout_rate", "0.1", TypeError),
+            ("shared_embedding", torch.nn.Embedding(1000, 512), TypeError),
         ],
     )
-    def test_init_validation(self, param, invalid_value, expected_error):
+    def test_init_validation(self, param, invalid_value, expected_error, init_encoder):
         """Test that invalid parameters raise the correct errors."""
         kwargs = {
-            "vocab_size": 1000,
             "d_model": 512,
             "d_ff": 2048,
             "blocks_count": 6,
             "heads_count": 8,
             "dropout_rate": 0.1,
+            "shared_embedding": init_encoder[1],
             param: invalid_value,
         }
 
@@ -42,26 +41,22 @@ class TestEncoder:
         """Test that forward returns the expected output shape."""
         batch_size, seq_len, inputs = encoder_sample_tensors
         mask = torch.ones((batch_size, seq_len, seq_len))
+        encoder, _, d_model = init_encoder
 
-        output = init_encoder(inputs, mask)
+        output = encoder(inputs, mask)
         assert output.shape == (
             batch_size,
             seq_len,
-            init_encoder._Encoder__emb[0].embedding_dim,
+            d_model,
         ), "Output should be size of (batch, seq_len, d_model)"
 
     def test_forward_with_custom_mask(self, init_encoder, encoder_sample_tensors):
         """Test that the mask is applied correctly."""
         batch_size, seq_len, inputs = encoder_sample_tensors
+        encoder = init_encoder[0]
 
         mask = torch.ones((batch_size, seq_len, seq_len))  # Mask out the last token
         mask[:, :, -1] = 0  # No attention to last token
 
-        output = init_encoder(inputs, mask)
+        output = encoder(inputs, mask)
         assert not torch.isnan(output).any(), "Mask shouldn't cause NaNs"
-
-    def test_embedding_layer(self, init_encoder):
-        """Test that embeddings are correctly applied."""
-        inputs = torch.tensor([[1, 2, 3]])
-        embedded = init_encoder._Encoder__emb(inputs)
-        assert embedded.shape == (1, 3, 512)  # (batch, seq_len, d_model)

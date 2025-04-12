@@ -6,6 +6,7 @@ from src.model.layer_norm import LayerNorm
 from src.model.multi_headed_attention import MultiHeadedAttention
 from src.model.positional_encoding import PositionalEncoding
 from src.model.positionwise_feed_forward import PositionwiseFeedForward
+from src.utils.shared_embedding import SharedEmbedding
 
 
 class Encoder(nn.Module):
@@ -14,22 +15,27 @@ class Encoder(nn.Module):
     """
 
     def __init__(
-        self, vocab_size: int, d_model: int, d_ff: int, blocks_count: int, heads_count: int, dropout_rate: float | int
+        self,
+        d_model: int,
+        d_ff: int,
+        blocks_count: int,
+        heads_count: int,
+        dropout_rate: float | int,
+        shared_embedding: SharedEmbedding,
     ):
         """
         Initializes the Encoder.
 
-        :param vocab_size: The size of the vocabulary (number of unique tokens).
         :param d_model: The dimensionality of the model's embeddings and hidden states.
         :param d_ff: The dimensionality of the feed-forward network's inner layer.
         :param blocks_count: The number of encoder blocks to stack.
         :param heads_count: The number of attention heads in each multi-head attention layer.
         :param dropout_rate: The dropout probability.
+        :param shared_embedding: SharedEmbedding object.
         """
         super().__init__()
 
         int_params = {
-            "vocab_size": vocab_size,
             "d_model": d_model,
             "d_ff": d_ff,
             "blocks_count": blocks_count,
@@ -44,10 +50,12 @@ class Encoder(nn.Module):
             raise TypeError(f"dropout_rate must be a float or an int, but got {type(dropout_rate)}.")
         if not (0.0 <= dropout_rate < 1.0):
             raise ValueError(f"dropout_rate must be in [0.0, 1.0), got {dropout_rate}")
+        if not isinstance(shared_embedding, SharedEmbedding):
+            raise TypeError(f"shared_embedding must be a SharedEmbedding object, but got {type(dropout_rate)}.")
 
         # Embedding layer with positional encoding
         self.__emb = nn.Sequential(
-            nn.Embedding(vocab_size, d_model),  # Embed tokens into d_model dimensional vectors
+            shared_embedding,  # Embed tokens into d_model dimensional vectors
             PositionalEncoding(d_model, dropout_rate),  # Add positional information
         )
 
