@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from torchtext.data import Dataset
+from torchtext.data import BucketIterator, Dataset
 
 from src.data.prepare_data import Data
 
@@ -60,3 +60,38 @@ class TestData:
         # Assert that the result is a tuple of Dataset objects
         assert isinstance(train_dataset, Dataset)
         assert isinstance(test_dataset, Dataset)
+
+    def test_init_dataset(self, temp_csv_file):
+        """
+        Test the init_dataset function with a temporary CSV file.
+        """
+        file, data_dict = temp_csv_file
+        data = Data()
+        batch_sizes = (16, 32)
+        train_iter, test_iter = data.init_dataset(file, batch_sizes=batch_sizes, split_ratio=1 / len(data_dict))
+
+        assert train_iter is not None
+        assert test_iter is not None
+        assert isinstance(train_iter, BucketIterator)
+        assert isinstance(test_iter, BucketIterator)
+
+        # Assert vocab size
+        assert len(data._Data__word_field.vocab) > 0
+
+        # Check if batch sizes are correct
+        for batch in train_iter:
+            print(batch)
+            assert batch.source.shape[0] <= batch_sizes[0]
+            break  # Only need to check one batch.
+
+        for batch in test_iter:
+            assert batch.target.shape[1] <= batch_sizes[1]
+            break
+
+    def test_init_dataset_file_not_found(self):
+        """
+        Test the init_dataset function when the CSV file is not found.
+        """
+        data = Data()
+        result = data.init_dataset("nonexistent_file.csv")
+        assert result is None
