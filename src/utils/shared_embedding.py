@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from gensim.models import KeyedVectors
 
 
 class SharedEmbedding(nn.Module):
@@ -77,3 +78,23 @@ class SharedEmbedding(nn.Module):
             raise TypeError(f"x must be a torch.Tensor, but got {type(x)}")
 
         return self.__embedding(x)
+
+
+def create_pretrained_embedding(path: str, padding_idx: int | None = None) -> SharedEmbedding:
+    """
+    Create shared embedding instance with pretrained embedding which is red using path.
+
+    :param path: Full path to pretrained embedding file.
+    :param padding_idx: The index of the token that should be padding. Must be a non-negative integer or None.
+    :return: Instance of SharedEmbedding.
+    """
+    # Read a file and get parameters
+    glove_model = KeyedVectors.load_word2vec_format(path, binary=False, no_header=True)
+    embedding_matrix = torch.tensor(glove_model.vectors)
+    vocab_size = embedding_matrix.shape[0]
+    d_model = embedding_matrix.shape[1]
+
+    shared_embedding = SharedEmbedding(
+        vocab_size=vocab_size, d_model=d_model, padding_idx=padding_idx, pretrained_embeddings=embedding_matrix
+    )
+    return shared_embedding
