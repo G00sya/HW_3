@@ -7,7 +7,7 @@ from src.utils.shared_embedding import SharedEmbedding
 class TestSharedEmbedding:
     def test_init(self):
         """
-        Tests the SharedEmbedding class initialization.
+        Tests the SharedEmbedding class initialization without pretrained embedding.
         """
         vocab_size = 10
         d_model = 5
@@ -34,6 +34,40 @@ class TestSharedEmbedding:
         # Check that the padding tokens are zeros (almost zeros due to machine precision).
         padding_embedding = shared_embedding(torch.tensor([padding_idx]))
         assert torch.allclose(padding_embedding, torch.zeros(1, d_model)), "Padding embedding should be zero."
+
+        # Check that the transformation is the same for the same token.
+        token_index = 1
+        token1_embedding = shared_embedding(torch.tensor([token_index]))
+        token2_embedding = shared_embedding(torch.tensor([token_index]))
+        assert torch.allclose(token1_embedding, token2_embedding), "Embeddings for the same token should be the same."
+
+    def test_init_with_pretrained_embedding(self):
+        """
+        Tests the SharedEmbedding class initialization with pretrained embedding.
+        """
+        vocab_size = 10
+        d_model = 5
+        padding_idx = 0
+
+        pretrained_embeddings = torch.randn(vocab_size, d_model)  # Example pre-trained embeddings
+        shared_embedding = SharedEmbedding(
+            vocab_size=vocab_size, d_model=d_model, padding_idx=padding_idx, pretrained_embeddings=pretrained_embeddings
+        )
+        assert (
+            shared_embedding._SharedEmbedding__embedding.num_embeddings == vocab_size
+        ), "Wrong parameters of nn.Embedding."
+        assert (
+            shared_embedding._SharedEmbedding__embedding.embedding_dim == d_model
+        ), "Wrong parameters of nn.Embedding."
+
+        # Create an input tensor.
+        input_tensor = torch.tensor([1, 2, 3, 4, 5])
+
+        # Transform the input tensor.
+        output_tensor = shared_embedding(input_tensor)
+
+        # Check the shape of the output tensor.
+        assert output_tensor.shape == (5, d_model), "Incorrect shape of the output tensor."
 
         # Check that the transformation is the same for the same token.
         token_index = 1
