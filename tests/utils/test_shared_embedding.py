@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from src.utils.shared_embedding import SharedEmbedding
+from src.utils.shared_embedding import SharedEmbedding, create_pretrained_embedding
 
 
 class TestSharedEmbedding:
@@ -74,6 +74,11 @@ class TestSharedEmbedding:
         token1_embedding = shared_embedding(torch.tensor([token_index]))
         token2_embedding = shared_embedding(torch.tensor([token_index]))
         assert torch.allclose(token1_embedding, token2_embedding), "Embeddings for the same token should be the same."
+
+    def test_invalid_pretrained_embedding(self):
+        pretrained_embeddings = "embedding"
+        with pytest.raises(TypeError):
+            SharedEmbedding(vocab_size=0, d_model=0, padding_idx=0, pretrained_embeddings=pretrained_embeddings)
 
     def test_init_vocab_size_type_error(self):
         """
@@ -163,3 +168,22 @@ class TestSharedEmbedding:
         output_tensor = shared_embedding(input_tensor)
 
         assert output_tensor.shape == (3, d_model), "Incorrect shape with specified dtype."
+
+
+def test_create_pretrained_embedding(test_glove_file):
+    """
+    Tests that the create_pretrained_embedding function correctly loads and initializes a SharedEmbedding.
+    """
+    file, vocab_size, d_model = test_glove_file
+    padding_idx = 0
+    embedding_layer = create_pretrained_embedding(file, padding_idx)
+
+    # Assertions: Check that the SharedEmbedding is created correctly
+    assert isinstance(embedding_layer, SharedEmbedding)
+
+    # Check vocab and embedding dims
+    assert embedding_layer._SharedEmbedding__embedding.num_embeddings == vocab_size
+    assert embedding_layer._SharedEmbedding__embedding.embedding_dim == d_model
+
+    # Check padding index:
+    assert embedding_layer._SharedEmbedding__embedding.padding_idx == padding_idx
