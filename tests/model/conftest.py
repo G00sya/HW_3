@@ -3,6 +3,7 @@ import torch
 
 from src.model.encoder import Encoder
 from src.model.encoder_block import EncoderBlock
+from src.model.generator import Generator
 from src.model.layer_norm import LayerNorm
 from src.model.multi_headed_attention import MultiHeadedAttention
 from src.model.positional_encoding import PositionalEncoding
@@ -150,3 +151,19 @@ def init_encoder() -> tuple[Encoder, SharedEmbedding, int]:
 def encoder_sample_tensors() -> tuple[int, int, torch.Tensor]:
     batch_size, seq_len = 2, 10
     return batch_size, seq_len, torch.randint(0, 1000, (batch_size, seq_len))
+
+  
+@pytest.fixture()
+def init_generator() -> (Generator, int, int):
+    d_model = 512
+    target_vocab_size = 10000
+    generator = Generator(d_model, target_vocab_size)
+    return generator, d_model, target_vocab_size
+
+
+@pytest.fixture()
+def init_input_for_generator(init_generator) -> torch.tensor:
+    _, d_model, _ = init_generator
+    batch_size = 32
+    x = torch.randn(batch_size, d_model)
+    return x
