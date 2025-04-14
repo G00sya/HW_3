@@ -47,7 +47,7 @@ class DecoderLayer(nn.Module):
         outputs = self.__self_attention_block(
             inputs, lambda inputs: self.__self_attn(inputs, inputs, inputs, target_mask)
         )
-        outputs = self._attention_block(
+        outputs = self.__attention_block(
             outputs, lambda inputs: self.__encoder_attn(inputs, encoder_output, encoder_output, source_mask)
         )
         return self.__feed_forward_block(outputs, self.__feed_forward)

@@ -49,8 +49,6 @@ class ResidualBlock(nn.Module):
 
         if not isinstance(inputs, torch.Tensor):
             raise TypeError(f"Inputs must be a torch.Tensor, but got {type(inputs)}")
-        if not isinstance(sublayer, nn.Module):
-            raise TypeError(f"Sublayer must be an nn.Module, but got {type(sublayer)}")
 
         normalized = self.__norm(inputs)
         sublayer_result = sublayer(normalized)
