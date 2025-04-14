@@ -166,6 +166,7 @@ def decoder_layer(valid_decoder_layer_params):
     size, self_attn, encoder_attn, feed_forward, dropout_rate = valid_decoder_layer_params
     return DecoderLayer(size, self_attn, encoder_attn, feed_forward, dropout_rate)
 
+
 @pytest.fixture()
 def init_generator() -> (Generator, int, int):
     d_model = 512
