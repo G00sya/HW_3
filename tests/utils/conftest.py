@@ -1,7 +1,6 @@
 import pytest
-import torch.optim as optim
-from torch import nn
 import torch
+import torch.optim as optim
 
 from src.utils.shared_embedding import SharedEmbedding
 
@@ -17,7 +16,7 @@ def init_shared_embedding_no_padding_idx():
 @pytest.fixture
 def simple_model_for_noam_opt():
     """Fixture providing a simple model with one parameter."""
-    return nn.Linear(10, 10)
+    return torch.nn.Linear(10, 10)
 
 
 @pytest.fixture
@@ -25,7 +24,7 @@ def sample_optimizer(simple_model_for_noam_opt):
     """Fixture providing an Adam optimizer with zero initial LR."""
     return optim.Adam(simple_model_for_noam_opt.parameters(), lr=0)
 
-  
+
 @pytest.fixture
 def test_glove_file(tmp_path):  # Added tmp_path argument
     """
