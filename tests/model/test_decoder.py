@@ -7,25 +7,6 @@ from src.model.layer_norm import LayerNorm
 from src.model.positional_encoding import PositionalEncoding
 
 
-@pytest.fixture
-def valid_decoder_params():
-    """Fixture to provide valid parameters for Decoder."""
-    vocab_size = 100
-    d_model = 512
-    d_ff = 2048
-    blocks_count = 6
-    heads_count = 8
-    dropout_rate = 0.1
-    return vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate
-
-
-@pytest.fixture
-def decoder(valid_decoder_params):
-    """Fixture to provide a pre-initialized Decoder."""
-    vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate = valid_decoder_params
-    return Decoder(vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate)
-
-
 def test_decoder_initialization(decoder, valid_decoder_params):
     """Checks that Decoder initializes correctly."""
     vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate = valid_decoder_params

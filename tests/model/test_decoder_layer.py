@@ -1,29 +1,9 @@
-import pytest
 import torch
 
 from src.model.decoder_layer import DecoderLayer
 from src.model.multi_headed_attention import MultiHeadedAttention
 from src.model.positionwise_feed_forward import PositionwiseFeedForward
 from src.model.residual_block import ResidualBlock
-
-
-@pytest.fixture
-def valid_decoder_layer_params():
-    """Fixture to provide valid parameters for DecoderLayer."""
-    size = 512
-    heads_count = 8
-    dropout_rate = 0.1
-    self_attn = MultiHeadedAttention(heads_count, size, dropout_rate)
-    encoder_attn = MultiHeadedAttention(heads_count, size, dropout_rate)
-    feed_forward = PositionwiseFeedForward(size, 2048, dropout_rate)
-    return size, self_attn, encoder_attn, feed_forward, dropout_rate
-
-
-@pytest.fixture
-def decoder_layer(valid_decoder_layer_params):
-    """Fixture to provide a pre-initialized DecoderLayer."""
-    size, self_attn, encoder_attn, feed_forward, dropout_rate = valid_decoder_layer_params
-    return DecoderLayer(size, self_attn, encoder_attn, feed_forward, dropout_rate)
 
 
 def test_decoder_layer_initialization(decoder_layer):
