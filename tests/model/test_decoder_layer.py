@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from src.model.decoder import DecoderLayer
+from src.model.decoder_layer import DecoderLayer
 from src.model.multi_headed_attention import MultiHeadedAttention
 from src.model.positionwise_feed_forward import PositionwiseFeedForward
 from src.model.residual_block import ResidualBlock
