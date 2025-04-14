@@ -76,6 +76,26 @@ class Decoder(nn.Module):
         """
         super().__init__()
 
+        # Проверка типов для int параметров
+        int_params = {
+            "vocab_size": vocab_size,
+            "d_model": d_model,
+            "d_ff": d_ff,
+            "blocks_count": blocks_count,
+            "heads_count": heads_count,
+        }
+        for name, value in int_params.items():
+            if not isinstance(value, int):
+                raise TypeError(f"{name} must be an integer, got {type(value)}")
+            if value <= 0:
+                raise ValueError(f"{name} must be positive, got {value}")
+
+        if not isinstance(dropout_rate, (float, int)):
+            raise TypeError(f"dropout_rate must be a float or an int, but got {type(dropout_rate)}.")
+
+        if not (0.0 <= dropout_rate < 1.0):
+            raise ValueError(f"dropout_rate must be in [0.0, 1.0), got {dropout_rate}")
+
         self.__emb = nn.Sequential(nn.Embedding(vocab_size, d_model), PositionalEncoding(d_model, dropout_rate))
 
         def create_decoder_block():
