@@ -1,6 +1,7 @@
 import pytest
 import torch.optim as optim
 from torch import nn
+import torch
 
 from src.utils.shared_embedding import SharedEmbedding
 
@@ -23,3 +24,23 @@ def simple_model_for_noam_opt():
 def sample_optimizer(simple_model_for_noam_opt):
     """Fixture providing an Adam optimizer with zero initial LR."""
     return optim.Adam(simple_model_for_noam_opt.parameters(), lr=0)
+
+  
+@pytest.fixture
+def test_glove_file(tmp_path):  # Added tmp_path argument
+    """
+    Fixture to create a dummy GloVe file for testing and clean it up afterwards using pytest's tmp_path.
+    """
+    test_embedding_path = tmp_path / "test_glove.txt"  # Create a Path object
+    test_vocab_size = 10
+    test_d_model = 5
+
+    # create some random embeddings:
+    test_embedding_matrix = torch.randn(test_vocab_size, test_d_model)
+
+    with open(str(test_embedding_path), "w") as f:  # Convert path to string
+        for i in range(test_vocab_size):
+            embedding_str = " ".join(str(x) for x in test_embedding_matrix[i].tolist())
+            f.write(f"word{i} {embedding_str}\n")
+
+    return str(test_embedding_path), test_vocab_size, test_d_model  # Return the string representation of the path

@@ -38,6 +38,13 @@ poetry env use python3.12
 poetry env activate
 ```
 
+Для установки предобученного эмбединга
+```bash
+mkdir -p ./embeddings
+wget -P ./embeddings https://huggingface.co/stanfordnlp/glove/resolve/main/glove.6B.zip
+unzip ./embeddings/glove.6B.zip -d ./embeddings/ && rm ./embeddings/glove.6B.zip
+```
+
 # Структура проекта
 
 ```
