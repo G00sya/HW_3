@@ -152,7 +152,7 @@ def encoder_sample_tensors() -> tuple[int, int, torch.Tensor]:
     batch_size, seq_len = 2, 10
     return batch_size, seq_len, torch.randint(0, 1000, (batch_size, seq_len))
 
-  
+
 @pytest.fixture()
 def init_generator() -> (Generator, int, int):
     d_model = 512
