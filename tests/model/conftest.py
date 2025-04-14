@@ -4,6 +4,7 @@ import torch
 from src.model.decoder import Decoder
 from src.model.decoder_layer import DecoderLayer
 from src.model.encoder_block import EncoderBlock
+from src.model.generator import Generator
 from src.model.layer_norm import LayerNorm
 from src.model.multi_headed_attention import MultiHeadedAttention
 from src.model.positional_encoding import PositionalEncoding
@@ -164,3 +165,18 @@ def decoder_layer(valid_decoder_layer_params):
     """Fixture to provide a pre-initialized DecoderLayer."""
     size, self_attn, encoder_attn, feed_forward, dropout_rate = valid_decoder_layer_params
     return DecoderLayer(size, self_attn, encoder_attn, feed_forward, dropout_rate)
+
+@pytest.fixture()
+def init_generator() -> (Generator, int, int):
+    d_model = 512
+    target_vocab_size = 10000
+    generator = Generator(d_model, target_vocab_size)
+    return generator, d_model, target_vocab_size
+
+
+@pytest.fixture()
+def init_input_for_generator(init_generator) -> torch.tensor:
+    _, d_model, _ = init_generator
+    batch_size = 32
+    x = torch.randn(batch_size, d_model)
+    return x
