@@ -1,9 +1,10 @@
 import torch.nn as nn
-from layer_norm import LayerNorm
-from multi_headed_attention import MultiHeadedAttention
-from positional_encoding import PositionalEncoding
-from positionwise_feed_forward import PositionwiseFeedForward
-from residual_block import ResidualBlock
+
+from src.model.layer_norm import LayerNorm
+from src.model.multi_headed_attention import MultiHeadedAttention
+from src.model.positional_encoding import PositionalEncoding
+from src.model.positionwise_feed_forward import PositionwiseFeedForward
+from src.model.residual_block import ResidualBlock
 
 
 class DecoderLayer(nn.Module):
