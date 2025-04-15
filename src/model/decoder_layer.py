@@ -1,5 +1,8 @@
+import torch
 import torch.nn as nn
 
+from src.model.multi_headed_attention import MultiHeadedAttention
+from src.model.positionwise_feed_forward import PositionwiseFeedForward
 from src.model.residual_block import ResidualBlock
 
 
@@ -9,7 +12,14 @@ class DecoderLayer(nn.Module):
     encoder-decoder attention, and a feed-forward network.
     """
 
-    def __init__(self, size, self_attn, encoder_attn, feed_forward, dropout_rate):
+    def __init__(
+        self,
+        size: int,
+        self_attn: MultiHeadedAttention,
+        encoder_attn: MultiHeadedAttention,
+        feed_forward: PositionwiseFeedForward,
+        dropout_rate: float,
+    ):
         """
         Initializes the DecoderLayer.
 
@@ -31,7 +41,9 @@ class DecoderLayer(nn.Module):
         self.__attention_block = ResidualBlock(size, dropout_rate)
         self.__feed_forward_block = ResidualBlock(size, dropout_rate)
 
-    def forward(self, inputs, encoder_output, source_mask, target_mask):
+    def forward(
+        self, inputs: torch.Tensor, encoder_output: torch.Tensor, source_mask: torch.Tensor, target_mask: torch.Tensor
+    ) -> torch.Tensor:
         """
         Performs a forward pass through the DecoderLayer.
 

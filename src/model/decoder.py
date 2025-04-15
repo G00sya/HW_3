@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 from src.model.decoder_layer import DecoderLayer
@@ -14,7 +15,15 @@ class Decoder(nn.Module):
     and a linear output layer.
     """
 
-    def __init__(self, vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate):
+    def __init__(
+        self,
+        vocab_size: int,  # Corrected: vocab_size is a parameter
+        d_model: int,
+        d_ff: int,
+        blocks_count: int,
+        heads_count: int,
+        dropout_rate: float | int,
+    ):
         """
         Initializes the Decoder.
 
@@ -49,7 +58,7 @@ class Decoder(nn.Module):
 
         self.__emb = nn.Sequential(nn.Embedding(vocab_size, d_model), PositionalEncoding(d_model, dropout_rate))
 
-        def create_decoder_block():
+        def create_decoder_block() -> DecoderLayer:
             """
             Helper function to create a single DecoderLayer.  This is necessary to avoid code duplication
             and make the Decoder's __init__ method more readable.
@@ -66,7 +75,9 @@ class Decoder(nn.Module):
         self.__norm = LayerNorm(d_model)
         self.__out_layer = nn.Linear(d_model, vocab_size)
 
-    def forward(self, inputs, encoder_output, source_mask, target_mask):
+    def forward(
+        self, inputs: torch.Tensor, encoder_output: torch.Tensor, source_mask: torch.Tensor, target_mask: torch.Tensor
+    ) -> torch.Tensor:
         """
         Performs a forward pass through the Decoder.
 
