@@ -6,9 +6,9 @@ import torch.nn.functional as F
 
 
 class ReductionStrEnum(StrEnum):
-    MEAN: auto()
-    SUM: auto()
-    NONE: auto()
+    MEAN = auto()
+    SUM = auto()
+    NONE = auto()
 
 
 class LabelSmoothingLoss(nn.Module):
@@ -20,15 +20,15 @@ class LabelSmoothingLoss(nn.Module):
     with a uniform distribution over all classes.
 
     Shape:
-        - Input: (N, C) where C = number of classes
-        - Target: (N,) where each value is 0 ≤ targets[i] ≤ C-1
+        - Input: (N, C) where C = number of classes, N = batch size × sequence length (if applicable)
+        - Target: (N,) (or (batch_size, seq_len) that can be flattened to (N,)) where each value is 0 ≤ targets[i] ≤ C-1
         - Output: scalar if reduction is 'mean' or 'sum', otherwise (N,)
     """
 
     def __init__(
         self,
         pad_idx: int | None = None,
-        smoothing: float | None = 0.1,
+        smoothing: float | int | None = 0.1,
         reduction: ReductionStrEnum = ReductionStrEnum.MEAN,
     ):
         """
@@ -42,8 +42,8 @@ class LabelSmoothingLoss(nn.Module):
 
         if not isinstance(pad_idx, int) and pad_idx is not None:
             raise TypeError(f"pad_idx must be an int, but got {type(pad_idx)}.")
-        if not isinstance(smoothing, float) and smoothing is not None:
-            raise TypeError(f"smoothing must be a float, but got {type(smoothing)}.")
+        if not isinstance(smoothing, (float, int)) and smoothing is not None:
+            raise TypeError(f"smoothing must be a float or an int, but got {type(smoothing)}.")
         if smoothing < 0 or smoothing > 1:
             raise ValueError("Smoothing must be between 0 and 1.")
         if not isinstance(reduction, ReductionStrEnum):
@@ -62,28 +62,28 @@ class LabelSmoothingLoss(nn.Module):
 
         :return: Computed loss value.
         """
-        target = target.contiguous().view(-1)
+        target = target.contiguous().view(-1)  # Flatten targets to 1D while preserving memory order.
         n_class = pred.size(1)
 
-        # Create one-hot vectors
+        # Create one-hot vectors.
         one_hot = torch.zeros_like(pred).scatter(1, target.view(-1, 1), 1)
 
-        # Apply label smoothing
+        # Apply label smoothing.
         one_hot = one_hot * (1 - self.smoothing) + (1 - one_hot) * self.smoothing / (n_class - 1)
 
-        # Compute log probabilities
+        # Compute log probabilities.
         log_prb = F.log_softmax(pred, dim=1)
 
-        # Handle padding
+        # Handle padding.
         non_pad_mask = target.ne(self.pad_idx) if self.pad_idx is not None else None
 
-        # Compute loss
+        # Compute loss.
         loss = -(one_hot * log_prb).sum(dim=1)
 
         if non_pad_mask is not None:
             loss = loss.masked_select(non_pad_mask)
 
-        # Apply reduction
+        # Apply reduction.
         if self.reduction == ReductionStrEnum.SUM:
             return loss.sum()
         elif self.reduction == ReductionStrEnum.MEAN:
