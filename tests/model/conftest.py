@@ -1,6 +1,8 @@
 import pytest
 import torch
 
+from src.model.decoder import Decoder
+from src.model.decoder_layer import DecoderLayer
 from src.model.encoder import Encoder
 from src.model.encoder_block import EncoderBlock
 from src.model.generator import Generator
@@ -127,6 +129,45 @@ def encoder_block_sample_tensors() -> tuple[torch.Tensor, torch.Tensor]:
     inputs = torch.randn(batch_size, seq_len, size)
     mask = torch.ones(batch_size, seq_len, seq_len)
     return inputs, mask
+
+
+@pytest.fixture
+def valid_decoder_params():
+    """Fixture to provide valid parameters for Decoder."""
+    vocab_size = 100
+    d_model = 512
+    d_ff = 2048
+    blocks_count = 6
+    heads_count = 8
+    dropout_rate = 0.1
+    return vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate
+
+
+@pytest.fixture
+def decoder(valid_decoder_params):
+    """Fixture to provide a pre-initialized Decoder."""
+    vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate = valid_decoder_params
+    shared_embedding = SharedEmbedding(vocab_size=vocab_size, d_model=d_model)
+    return Decoder(vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate, shared_embedding)
+
+
+@pytest.fixture
+def valid_decoder_layer_params():
+    """Fixture to provide valid parameters for DecoderLayer."""
+    size = 512
+    heads_count = 8
+    dropout_rate = 0.1
+    self_attn = MultiHeadedAttention(heads_count, size, dropout_rate)
+    encoder_attn = MultiHeadedAttention(heads_count, size, dropout_rate)
+    feed_forward = PositionwiseFeedForward(size, 2048, dropout_rate)
+    return size, self_attn, encoder_attn, feed_forward, dropout_rate
+
+
+@pytest.fixture
+def decoder_layer(valid_decoder_layer_params):
+    """Fixture to provide a pre-initialized DecoderLayer."""
+    size, self_attn, encoder_attn, feed_forward, dropout_rate = valid_decoder_layer_params
+    return DecoderLayer(size, self_attn, encoder_attn, feed_forward, dropout_rate)
 
 
 @pytest.fixture
