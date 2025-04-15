@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from src.model.decoder_layer import DecoderLayer
@@ -70,3 +71,63 @@ def test_decoder_layer_forward_pass_with_masks(decoder_layer):
 
     assert isinstance(output, torch.Tensor)
     assert output.shape == (batch_size, target_seq_len, size)
+
+
+def test_initialization(valid_decoder_layer_params):
+    """Checks that DecoderLayer initializes correctly with valid parameters."""
+    size, self_attn, encoder_attn, feed_forward, dropout_rate = valid_decoder_layer_params
+    decoder_layer = DecoderLayer(size, self_attn, encoder_attn, feed_forward, dropout_rate)
+    assert isinstance(decoder_layer, DecoderLayer)
+
+
+def test_decoder_layer_initialization_type_errors():
+    """Checks that DecoderLayer raises TypeError for invalid parameter types."""
+    with pytest.raises(TypeError):
+        # All invalid types
+        DecoderLayer(size="invalid", self_attn=None, encoder_attn=None, feed_forward=None, dropout_rate=None)
+
+    size = 512
+    self_attn = MultiHeadedAttention(heads_count=8, d_model=size)
+    encoder_attn = MultiHeadedAttention(heads_count=8, d_model=size)
+    feed_forward = PositionwiseFeedForward(d_model=size, d_ff=2048)
+    dropout_rate = 0.1
+
+    with pytest.raises(TypeError):
+        DecoderLayer(
+            size="invalid",
+            self_attn=self_attn,
+            encoder_attn=encoder_attn,
+            feed_forward=feed_forward,
+            dropout_rate=dropout_rate,
+        )
+    with pytest.raises(TypeError):
+        DecoderLayer(
+            size=size,
+            self_attn="invalid",
+            encoder_attn=encoder_attn,
+            feed_forward=feed_forward,
+            dropout_rate=dropout_rate,
+        )
+    with pytest.raises(TypeError):
+        DecoderLayer(
+            size=size, self_attn=self_attn, encoder_attn="invalid", feed_forward=feed_forward, dropout_rate=dropout_rate
+        )
+    with pytest.raises(TypeError):
+        DecoderLayer(
+            size=size, self_attn=self_attn, encoder_attn=encoder_attn, feed_forward="invalid", dropout_rate=dropout_rate
+        )
+    with pytest.raises(TypeError):
+        DecoderLayer(
+            size=size, self_attn=self_attn, encoder_attn=encoder_attn, feed_forward=feed_forward, dropout_rate="invalid"
+        )
+
+
+def test_decoder_layer_initialization_value_errors(valid_decoder_layer_params):
+    """Checks that DecoderLayer raises ValueError for invalid parameter values."""
+    size, self_attn, encoder_attn, feed_forward, dropout_rate = valid_decoder_layer_params
+
+    # Invalid dropout_rate
+    with pytest.raises(ValueError):
+        DecoderLayer(
+            size=size, self_attn=self_attn, encoder_attn=encoder_attn, feed_forward=feed_forward, dropout_rate=1.1
+        )

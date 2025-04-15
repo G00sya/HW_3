@@ -34,6 +34,19 @@ class DecoderLayer(nn.Module):
         """
         super().__init__()
 
+        if not isinstance(size, int):
+            raise TypeError(f"size must be an int, but got {type(size)}")
+        if not isinstance(self_attn, MultiHeadedAttention):
+            raise TypeError(f"self_attn must be a MultiHeadedAttention, but got {type(self_attn)}")
+        if not isinstance(encoder_attn, MultiHeadedAttention):
+            raise TypeError(f"encoder_attn must be a MultiHeadedAttention, but got {type(encoder_attn)}")
+        if not isinstance(feed_forward, PositionwiseFeedForward):
+            raise TypeError(f"feed_forward must be a PositionwiseFeedForward, but got {type(feed_forward)}")
+        if not isinstance(dropout_rate, float):
+            raise TypeError(f"dropout_rate must be a float, but got {type(dropout_rate)}")
+        if not (0.0 <= dropout_rate < 1.0):
+            raise ValueError(f"dropout_rate must be in [0.0, 1.0), got {dropout_rate}")
+
         self.__self_attn = self_attn
         self.__encoder_attn = encoder_attn
         self.__feed_forward = feed_forward
