@@ -3,6 +3,7 @@ import torch
 
 from src.model.decoder import Decoder
 from src.model.decoder_layer import DecoderLayer
+from src.model.encoder import Encoder
 from src.model.encoder_block import EncoderBlock
 from src.model.generator import Generator
 from src.model.layer_norm import LayerNorm
@@ -120,7 +121,7 @@ def init_encoder_block() -> EncoderBlock:
 
 
 @pytest.fixture
-def sample_tensors() -> tuple[torch.Tensor, torch.Tensor]:
+def encoder_block_sample_tensors() -> tuple[torch.Tensor, torch.Tensor]:
     batch_size = 2
     seq_len = 10
     size = 64
@@ -167,6 +168,27 @@ def decoder_layer(valid_decoder_layer_params):
     """Fixture to provide a pre-initialized DecoderLayer."""
     size, self_attn, encoder_attn, feed_forward, dropout_rate = valid_decoder_layer_params
     return DecoderLayer(size, self_attn, encoder_attn, feed_forward, dropout_rate)
+def init_encoder() -> tuple[Encoder, SharedEmbedding, int]:
+    d_model = 512
+    shared_embedding = SharedEmbedding(vocab_size=1000, d_model=d_model)
+    return (
+        Encoder(
+            d_model=d_model,
+            d_ff=2048,
+            blocks_count=6,
+            heads_count=8,
+            dropout_rate=0.1,
+            shared_embedding=shared_embedding,
+        ),
+        shared_embedding,
+        d_model,
+    )
+
+
+@pytest.fixture
+def encoder_sample_tensors() -> tuple[int, int, torch.Tensor]:
+    batch_size, seq_len = 2, 10
+    return batch_size, seq_len, torch.randint(0, 1000, (batch_size, seq_len))
 
 
 @pytest.fixture()
