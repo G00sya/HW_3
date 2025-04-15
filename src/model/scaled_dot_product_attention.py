@@ -2,7 +2,7 @@ import math
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as functional
+import torch.nn.functional as F
 
 
 class ScaledDotProductAttention(nn.Module):
@@ -50,7 +50,7 @@ class ScaledDotProductAttention(nn.Module):
             # probabilities to the masked positions. This is crucial for preventing those positions from influencing
             # the attention mechanism.
             scores = scores.masked_fill(mask == 0, -1e9)
-        p_attn = functional.softmax(scores, dim=-1)
+        p_attn = F.softmax(scores, dim=-1)
         p_attn = self.__dropout(p_attn)
 
         return torch.matmul(p_attn, value), p_attn

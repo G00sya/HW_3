@@ -43,3 +43,10 @@ def test_glove_file(tmp_path):  # Added tmp_path argument
             f.write(f"word{i} {embedding_str}\n")
 
     return str(test_embedding_path), test_vocab_size, test_d_model  # Return the string representation of the path
+
+
+@pytest.fixture
+def label_smoothing_loss_sample_data():
+    pred = torch.tensor([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]], dtype=torch.float32)
+    target = torch.tensor([2, 1], dtype=torch.long)
+    return pred, target
