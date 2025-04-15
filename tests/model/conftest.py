@@ -11,6 +11,7 @@ from src.model.positional_encoding import PositionalEncoding
 from src.model.positionwise_feed_forward import PositionwiseFeedForward
 from src.model.residual_block import ResidualBlock
 from src.model.scaled_dot_product_attention import ScaledDotProductAttention
+from src.utils.shared_embedding import SharedEmbedding
 
 
 @pytest.fixture
@@ -145,7 +146,8 @@ def valid_decoder_params():
 def decoder(valid_decoder_params):
     """Fixture to provide a pre-initialized Decoder."""
     vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate = valid_decoder_params
-    return Decoder(vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate)
+    shared_embedding = SharedEmbedding(vocab_size=vocab_size, d_model=d_model)
+    return Decoder(vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate, shared_embedding)
 
 
 @pytest.fixture

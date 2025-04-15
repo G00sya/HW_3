@@ -6,6 +6,7 @@ from src.model.layer_norm import LayerNorm
 from src.model.multi_headed_attention import MultiHeadedAttention
 from src.model.positional_encoding import PositionalEncoding
 from src.model.positionwise_feed_forward import PositionwiseFeedForward
+from src.utils.shared_embedding import SharedEmbedding
 
 
 class Decoder(nn.Module):
@@ -23,6 +24,7 @@ class Decoder(nn.Module):
         blocks_count: int,
         heads_count: int,
         dropout_rate: float | int,
+        shared_embedding: SharedEmbedding,
     ):
         """
         Initializes the Decoder.
@@ -56,7 +58,7 @@ class Decoder(nn.Module):
         if not (0.0 <= dropout_rate < 1.0):
             raise ValueError(f"dropout_rate must be in [0.0, 1.0), got {dropout_rate}")
 
-        self.__emb = nn.Sequential(nn.Embedding(vocab_size, d_model), PositionalEncoding(d_model, dropout_rate))
+        self.__emb = nn.Sequential(shared_embedding, PositionalEncoding(d_model, dropout_rate))
 
         def create_decoder_block() -> DecoderLayer:
             """
