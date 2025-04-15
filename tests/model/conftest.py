@@ -168,6 +168,9 @@ def decoder_layer(valid_decoder_layer_params):
     """Fixture to provide a pre-initialized DecoderLayer."""
     size, self_attn, encoder_attn, feed_forward, dropout_rate = valid_decoder_layer_params
     return DecoderLayer(size, self_attn, encoder_attn, feed_forward, dropout_rate)
+
+
+@pytest.fixture
 def init_encoder() -> tuple[Encoder, SharedEmbedding, int]:
     d_model = 512
     shared_embedding = SharedEmbedding(vocab_size=1000, d_model=d_model)
