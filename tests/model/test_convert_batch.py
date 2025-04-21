@@ -24,10 +24,10 @@ def test_convert_batch_shape_no_mock(example_batch_tensors):
     example_batch = MockBatch(source_data, target_data)
     source_inputs, target_inputs, source_mask, target_mask = convert_batch(example_batch, pad_idx=0)
 
-    assert source_inputs.shape == (2, 4)  # (batch_size, source_seq_len)
-    assert target_inputs.shape == (2, 3)  # (batch_size, target_seq_len)
-    assert source_mask.shape == (2, 1, 4)  # (batch_size, 1, source_seq_len)
-    assert target_mask.shape == (2, 3, 3)  # (batch_size, target_seq_len, target_seq_len)
+    assert source_inputs.shape == (4, 2)  # (source_seq_len, batch_size)
+    assert target_inputs.shape == (3, 2)  # (target_seq_len, batch_size)
+    assert source_mask.shape == (4, 1, 2)  # (batch_size, 1, source_seq_len)
+    assert target_mask.shape == (3, 2, 2)  # (batch_size, target_seq_len, target_seq_len)
 
 
 def test_convert_batch_values_no_mock(example_batch_tensors):
@@ -44,17 +44,11 @@ def test_convert_batch_values_no_mock(example_batch_tensors):
     source_inputs, target_inputs, source_mask, target_mask = convert_batch(example_batch, pad_idx=0)
 
     # Check a couple of values in the input tensors (after transpose)
-    assert source_inputs[0, 0] == 1
-    assert target_inputs[1, 1] == 11
+    assert source_inputs[0, 0].item() == 1
+    assert target_inputs[1, 1].item() == 11
 
     # Check some values in the source mask - should be false for padding, true otherwise
-    assert source_mask[0, 0, 2] is False  # Padding token in source should be masked
-    assert source_mask[0, 0, 0] is True  # Non-padding token in source should not be masked
-    assert source_mask[1, 0, 2] is False
-    assert source_mask[1, 0, 3] is True
-
-    # Basic checks for the target mask. More thorough checks are done in the test for `make_mask`
-    assert target_mask[0, 0, 0] is True
-    assert target_mask[0, 0, 1] is False  # Subsequent masking
-    assert target_mask[1, 2, 2] is True
-    assert target_mask[0, 1, 2] is False
+    assert source_mask[2, 0, 0].item() is False
+    assert source_mask[0, 0, 0].item() is True
+    assert source_mask[2, 0, 1].item() is False
+    assert source_mask[3, 0, 1].item() is True

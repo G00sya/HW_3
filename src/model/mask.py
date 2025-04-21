@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import torch
 import torch.nn as nn
 
@@ -28,7 +26,7 @@ def make_mask(
     source_inputs: torch.Tensor,
     target_inputs: torch.Tensor,
     pad_idx: int,
-) -> Tuple[torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Creates masks for source and target sequences.
 
@@ -51,7 +49,7 @@ def make_mask(
     return source_mask, target_mask
 
 
-def convert_batch(batch: nn.Module, pad_idx: int = 1) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+def convert_batch(batch: nn.Module, pad_idx: int = 1) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Converts a batch of data for the model.
 
     Transposes source/target sequences and creates masks for padding and future tokens.

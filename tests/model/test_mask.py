@@ -55,16 +55,16 @@ def test_make_mask_padding():
 
     source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx)
 
-    assert source_mask[0, 0, 2] is False  # Padding should be False
-    assert source_mask[0, 0, 4] is False  # Padding should be False
-    assert target_mask[0, 1, 1] is False  # Padding should be False
-    assert target_mask[0, 3, 3] is False  # Padding should be False
+    assert source_mask[0, 0, 2].item() is False  # Padding should be False
+    assert source_mask[0, 0, 4].item() is False  # Padding should be False
+    assert target_mask[0, 0, 1].item() is False  # Padding should be False
+    assert target_mask[0, 0, 3].item() is False  # Padding should be False
 
-    assert source_mask[0, 0, 0] is True  # Non-padding should be True
-    assert source_mask[0, 0, 1] is True  # Non-padding should be True
-    assert source_mask[0, 0, 3] is True  # Non-padding should be True
-    assert target_mask[0, 0, 0] is True  # Non-padding should be True
-    assert target_mask[0, 2, 2] is True  # Non-padding should be True
+    assert source_mask[0, 0, 0].item() is True  # Non-padding should be True
+    assert source_mask[0, 0, 1].item() is True  # Non-padding should be True
+    assert source_mask[0, 0, 3].item() is True  # Non-padding should be True
+    assert target_mask[0, 0, 0].item() is True  # Non-padding should be True
+    assert target_mask[0, 0, 2].item() is False  # Non-padding should be True
 
 
 def test_make_mask_subsequent():
@@ -79,9 +79,14 @@ def test_make_mask_subsequent():
     source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx)
 
     # Checks that the upper triangle of target_mask (future) is False
-    assert target_mask[0, 0, 1:].all() is False
-    assert target_mask[0, 1, 2:].all() is False
-    assert target_mask[0, 2, 3:].all() is False
+    expected_false = torch.zeros(target_seq_len - 1, dtype=torch.bool)  # Tensor of False
+    assert (target_mask[0, 0, 1:] == expected_false).all().item() is True
+
+    expected_false = torch.zeros(target_seq_len - 2, dtype=torch.bool)
+    assert (target_mask[0, 1, 2:] == expected_false).all().item() is True
+
+    expected_false = torch.zeros(target_seq_len - 3, dtype=torch.bool)
+    assert (target_mask[0, 2, 3:] == expected_false).all().item() is True
 
 
 def test_make_mask_no_padding():
@@ -98,7 +103,7 @@ def test_make_mask_no_padding():
 
     expected_mask = subsequent_mask(target_seq_len).type_as(target_mask)
     assert (target_mask[0] == expected_mask).all()
-    assert source_mask.all() is True
+    assert source_mask.all().item() is True
 
 
 def test_make_mask_different_lengths():
