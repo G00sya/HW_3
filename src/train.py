@@ -2,10 +2,14 @@ import math
 from typing import Iterable, Optional
 
 import torch
+import torch.nn as nn
 from torch import Tensor
+from torchtext.data import Field
 from tqdm.auto import tqdm
 
+from src.model.encoder_decoder import EncoderDecoder
 from src.utils.mask import convert_batch
+from src.utils.noam_opt import NoamOpt
 from src.utils.shared_embedding import create_pretrained_embedding
 
 tqdm.get_lock().locks = []
@@ -109,3 +113,25 @@ def fit(
                 best_val_loss = val_loss
 
     return train_losses, best_val_loss  # Return training and validation losses
+
+
+if torch.cuda.is_available():
+    DEVICE = torch.device("cuda")
+else:
+    DEVICE = torch.device("cpu")
+
+# Standard NLP special tokens (not sensitive)
+BOS_TOKEN = "<s>"  # noqa: S105
+EOS_TOKEN = "</s>"  # noqa: S105
+
+word_field = Field(tokenize="moses", init_token=BOS_TOKEN, eos_token=EOS_TOKEN, lower=True)
+fields = [("source", word_field), ("target", word_field)]
+
+model = EncoderDecoder(source_vocab_size=len(word_field.vocab), target_vocab_size=len(word_field.vocab)).to(DEVICE)
+
+pad_idx = word_field.vocab.stoi["<pad>"]
+criterion = nn.CrossEntropyLoss(ignore_index=pad_idx).to(DEVICE)
+
+optimizer = NoamOpt(model.d_model)
+
+# fit(model, criterion, optimizer, train_iter, epochs_count=30, val_iter=test_iter)
