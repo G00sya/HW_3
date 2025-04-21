@@ -1,3 +1,5 @@
+from typing import Callable
+
 import torch
 import torch.nn as nn
 
@@ -33,7 +35,7 @@ class ResidualBlock(nn.Module):
         self.__norm = LayerNorm(size)  # Assuming LayerNorm takes size as an argument
         self.__dropout = nn.Dropout(dropout_rate)
 
-    def forward(self, inputs: torch.Tensor, sublayer: nn.Module) -> torch.Tensor:
+    def forward(self, inputs: torch.Tensor, sublayer: Callable) -> torch.Tensor:
         """
         Applies a residual connection around a sublayer.
         This method normalizes the input, passes it through a sublayer, applies dropout, and then adds the result back
@@ -49,8 +51,8 @@ class ResidualBlock(nn.Module):
 
         if not isinstance(inputs, torch.Tensor):
             raise TypeError(f"Inputs must be a torch.Tensor, but got {type(inputs)}")
-        if not isinstance(sublayer, nn.Module):
-            raise TypeError(f"Sublayer must be an nn.Module, but got {type(sublayer)}")
+        if not isinstance(sublayer, Callable):
+            raise TypeError(f"Sublayer must be an callable, but got {type(sublayer)}")
 
         normalized = self.__norm(inputs)
         sublayer_result = sublayer(normalized)

@@ -1,6 +1,9 @@
 import pytest
 import torch
 
+from src.model.decoder import Decoder
+from src.model.decoder_layer import DecoderLayer
+from src.model.encoder import Encoder
 from src.model.encoder_block import EncoderBlock
 from src.model.generator import Generator
 from src.model.layer_norm import LayerNorm
@@ -9,6 +12,7 @@ from src.model.positional_encoding import PositionalEncoding
 from src.model.positionwise_feed_forward import PositionwiseFeedForward
 from src.model.residual_block import ResidualBlock
 from src.model.scaled_dot_product_attention import ScaledDotProductAttention
+from src.utils.shared_embedding import SharedEmbedding
 
 
 @pytest.fixture
@@ -117,7 +121,7 @@ def init_encoder_block() -> EncoderBlock:
 
 
 @pytest.fixture
-def sample_tensors() -> tuple[torch.Tensor, torch.Tensor]:
+def encoder_block_sample_tensors() -> tuple[torch.Tensor, torch.Tensor]:
     batch_size = 2
     seq_len = 10
     size = 64
@@ -125,6 +129,69 @@ def sample_tensors() -> tuple[torch.Tensor, torch.Tensor]:
     inputs = torch.randn(batch_size, seq_len, size)
     mask = torch.ones(batch_size, seq_len, seq_len)
     return inputs, mask
+
+
+@pytest.fixture
+def valid_decoder_params():
+    """Fixture to provide valid parameters for Decoder."""
+    vocab_size = 100
+    d_model = 512
+    d_ff = 2048
+    blocks_count = 6
+    heads_count = 8
+    dropout_rate = 0.1
+    return vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate
+
+
+@pytest.fixture
+def decoder(valid_decoder_params):
+    """Fixture to provide a pre-initialized Decoder."""
+    vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate = valid_decoder_params
+    shared_embedding = SharedEmbedding(vocab_size=vocab_size, d_model=d_model)
+    return Decoder(vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate, shared_embedding)
+
+
+@pytest.fixture
+def valid_decoder_layer_params():
+    """Fixture to provide valid parameters for DecoderLayer."""
+    size = 512
+    heads_count = 8
+    dropout_rate = 0.1
+    self_attn = MultiHeadedAttention(heads_count, size, dropout_rate)
+    encoder_attn = MultiHeadedAttention(heads_count, size, dropout_rate)
+    feed_forward = PositionwiseFeedForward(size, 2048, dropout_rate)
+    return size, self_attn, encoder_attn, feed_forward, dropout_rate
+
+
+@pytest.fixture
+def decoder_layer(valid_decoder_layer_params):
+    """Fixture to provide a pre-initialized DecoderLayer."""
+    size, self_attn, encoder_attn, feed_forward, dropout_rate = valid_decoder_layer_params
+    return DecoderLayer(size, self_attn, encoder_attn, feed_forward, dropout_rate)
+
+
+@pytest.fixture
+def init_encoder() -> tuple[Encoder, SharedEmbedding, int]:
+    d_model = 512
+    shared_embedding = SharedEmbedding(vocab_size=1000, d_model=d_model)
+    return (
+        Encoder(
+            d_model=d_model,
+            d_ff=2048,
+            blocks_count=6,
+            heads_count=8,
+            dropout_rate=0.1,
+            shared_embedding=shared_embedding,
+        ),
+        shared_embedding,
+        d_model,
+    )
+
+
+@pytest.fixture
+def encoder_sample_tensors() -> tuple[int, int, torch.Tensor]:
+    batch_size, seq_len = 2, 10
+    return batch_size, seq_len, torch.randint(0, 1000, (batch_size, seq_len))
 
 
 @pytest.fixture()
