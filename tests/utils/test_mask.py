@@ -1,6 +1,6 @@
 import torch
 
-from src.model.mask import make_mask, subsequent_mask
+from src.utils.mask import make_mask, subsequent_mask
 
 
 def test_subsequent_mask_shape():

@@ -1,4 +1,4 @@
-from src.model.mask import convert_batch
+from src.utils.mask import convert_batch
 
 
 def test_convert_batch_shape_no_mock(example_batch_tensors):
