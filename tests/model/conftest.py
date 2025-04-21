@@ -208,11 +208,3 @@ def init_input_for_generator(init_generator) -> torch.tensor:
     batch_size = 32
     x = torch.randn(batch_size, d_model)
     return x
-
-
-@pytest.fixture
-def example_batch_tensors():
-    """Creates sample source and target tensors for testing."""
-    source_data = torch.tensor([[1, 2, 0, 4], [5, 6, 0, 7]])
-    target_data = torch.tensor([[8, 9, 0], [10, 11, 0]])
-    return source_data, target_data
