@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 import torch
 
@@ -5,6 +7,7 @@ from src.model.decoder import Decoder
 from src.model.decoder_layer import DecoderLayer
 from src.model.encoder import Encoder
 from src.model.encoder_block import EncoderBlock
+from src.model.encoder_decoder import EncoderDecoder
 from src.model.generator import Generator
 from src.model.layer_norm import LayerNorm
 from src.model.multi_headed_attention import MultiHeadedAttention
@@ -208,3 +211,36 @@ def init_input_for_generator(init_generator) -> torch.tensor:
     batch_size = 32
     x = torch.randn(batch_size, d_model)
     return x
+
+
+@pytest.fixture
+def init_encoder_decoder() -> tuple[torch.nn.Module, SharedEmbedding, int]:
+    vocab_size = 100
+    d_model = 256
+    shared_embedding = SharedEmbedding(vocab_size, d_model)
+    model = EncoderDecoder(
+        target_vocab_size=vocab_size,
+        shared_embedding=shared_embedding,
+        d_model=d_model,
+        d_ff=1024,
+        blocks_count=4,
+        heads_count=8,
+        dropout_rate=0.1,
+    )
+    return model, shared_embedding, vocab_size
+
+
+@pytest.fixture
+def sample_inputs_for_encoder_decoder() -> dict[str, Any]:
+    batch_size = 2
+    src_seq_len = 10
+    tgt_seq_len = 12
+
+    return {
+        "source_inputs": torch.randint(0, 100, (batch_size, src_seq_len)),
+        "target_inputs": torch.randint(0, 100, (batch_size, tgt_seq_len)),
+        "source_mask": torch.ones((batch_size, 1, src_seq_len), dtype=torch.bool),
+        "target_mask": torch.tril(torch.ones((batch_size, tgt_seq_len, tgt_seq_len), dtype=torch.bool)),
+        "batch_size": batch_size,
+        "tgt_seq_len": tgt_seq_len,
+    }
