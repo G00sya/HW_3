@@ -1,6 +1,8 @@
 import math
+from typing import Iterable, Optional
 
 import torch
+from torch import Tensor
 from tqdm.auto import tqdm
 
 from src.utils.mask import convert_batch
@@ -12,7 +14,24 @@ if __name__ == "__main__":
     # Initialize SharedEmbedding with glove embedding
     shared_embedding = create_pretrained_embedding(path="./embeddings/glove.6B.300d.txt", padding_idx=0)
 
-    def do_epoch(model, criterion, data_iter, optimizer=None, name=None):
+    def do_epoch(
+        model: torch.nn.Module,
+        criterion: torch.nn.Module,
+        data_iter: Iterable[tuple[Tensor, Tensor, Tensor, Tensor]],
+        optimizer: Optional[torch.optim.Optimizer] = None,
+        name: Optional[str] = None,
+    ) -> float:
+        """
+        Performs a single training or validation epoch with progress tracking.
+
+        :param model: Neural network model to train/evaluate. Must implement forward().
+        :param criterion: Loss function (e.g., CrossEntropyLoss).
+        :param data_iter: Iterator yielding batches of (source, target) pairs.
+        :param optimizer: Optimizer for parameter updates. None for validation.
+        :param name: Prefix for progress bar descriptions (e.g., "Train").
+
+        :return: Average loss across all batches in the epoch.
+        """
         epoch_loss = 0
 
         is_train = optimizer is not None
@@ -52,7 +71,28 @@ if __name__ == "__main__":
 
         return epoch_loss / batches_count
 
-    def fit(model, criterion, optimizer, train_iter, epochs_count=1, val_iter=None):
+    def fit(
+        model: torch.nn.Module,
+        criterion: torch.nn.Module,
+        optimizer: torch.optim.Optimizer,
+        train_iter: Iterable[tuple[Tensor, Tensor, Tensor, Tensor]],
+        epochs_count: int = 1,
+        val_iter: Optional[Iterable[tuple[Tensor, Tensor, Tensor, Tensor]]] = None,
+    ) -> tuple[list[float], float]:
+        """
+        Trains the model for specified number of epochs with optional validation.
+
+        :param model: Neural network model to train.
+        :param criterion: Loss function used for optimization.
+        :param optimizer: Optimizer for parameter updates.
+        :param train_iter: Training data iterator yielding batches of tensors
+               (source, target, source_mask, target_mask).
+        :param epochs_count: Number of complete passes through the training data. Default: 1.
+        :param val_iter: Optional validation data iterator with same format as train_iter. Default: None.
+        :return: Tuple containing (training_losses, best_validation_loss).
+                 training_losses: List of average training losses per epoch.
+                 best_validation_loss: Lowest validation loss encountered (inf if no validation).
+        """
         best_val_loss = float("inf")
         train_losses = []  # Track training losses per epoch
 
