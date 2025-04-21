@@ -1,15 +1,4 @@
-import pytest
-import torch
-
 from src.model.mask import convert_batch
-
-
-@pytest.fixture
-def example_batch_tensors():
-    """Creates sample source and target tensors for testing."""
-    source_data = torch.tensor([[1, 2, 0, 4], [5, 6, 0, 7]])
-    target_data = torch.tensor([[8, 9, 0], [10, 11, 0]])
-    return source_data, target_data
 
 
 def test_convert_batch_shape_no_mock(example_batch_tensors):
