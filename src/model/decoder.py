@@ -18,7 +18,6 @@ class Decoder(nn.Module):
 
     def __init__(
         self,
-        vocab_size: int,  # Corrected: vocab_size is a parameter
         d_model: int,
         d_ff: int,
         blocks_count: int,
@@ -29,7 +28,6 @@ class Decoder(nn.Module):
         """
         Initializes the Decoder.
 
-        :param vocab_size: The size of the target vocabulary.
         :param d_model: The dimensionality of the model's embeddings and hidden states.
         :param d_ff: The dimensionality of the feed-forward network's inner layer.
         :param blocks_count: The number of decoder blocks (DecoderLayers) to stack.
@@ -40,7 +38,6 @@ class Decoder(nn.Module):
 
         # Проверка типов для int параметров
         int_params = {
-            "vocab_size": vocab_size,
             "d_model": d_model,
             "d_ff": d_ff,
             "blocks_count": blocks_count,
@@ -75,7 +72,6 @@ class Decoder(nn.Module):
 
         self.__blocks = nn.ModuleList([create_decoder_block() for _ in range(blocks_count)])
         self.__norm = LayerNorm(d_model)
-        self.__out_layer = nn.Linear(d_model, vocab_size)
 
     def forward(
         self, inputs: torch.Tensor, encoder_output: torch.Tensor, source_mask: torch.Tensor, target_mask: torch.Tensor
@@ -91,10 +87,10 @@ class Decoder(nn.Module):
         :param target_mask: The mask for the target sequence,
         indicating which positions are valid and preventing future positions from being attended to (look-ahead mask).
         Shape: (batch_size, target_seq_len, target_seq_len).
-        :return: The output tensor after processing by the decoder.  Shape: (batch_size, target_seq_len, vocab_size).
+        :return: The output tensor after processing by the decoder.  Shape: (batch_size, target_seq_len, d_model).
         These are the logits for each word in the target vocabulary.
         """
         inputs = self.__emb(inputs)
         for block in self.__blocks:
             inputs = block(inputs, encoder_output, source_mask, target_mask)
-        return self.__out_layer(self.__norm(inputs))
+        return self.__norm(inputs)
