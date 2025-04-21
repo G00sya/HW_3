@@ -35,7 +35,7 @@ class ResidualBlock(nn.Module):
         self.__norm = LayerNorm(size)  # Assuming LayerNorm takes size as an argument
         self.__dropout = nn.Dropout(dropout_rate)
 
-    def forward(self, inputs: torch.Tensor, sublayer: nn.Module) -> torch.Tensor:
+    def forward(self, inputs: torch.Tensor, sublayer: Callable) -> torch.Tensor:
         """
         Applies a residual connection around a sublayer.
         This method normalizes the input, passes it through a sublayer, applies dropout, and then adds the result back
