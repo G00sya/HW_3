@@ -46,6 +46,14 @@ def test_glove_file(tmp_path):  # Added tmp_path argument
 
 
 @pytest.fixture
+def example_batch_tensors():
+    """Creates sample source and target tensors for testing."""
+    source_data = torch.tensor([[1, 2, 0, 4], [5, 6, 0, 7]])
+    target_data = torch.tensor([[8, 9, 0], [10, 11, 0]])
+    return source_data, target_data
+
+
+@pytest.fixture
 def label_smoothing_loss_sample_data():
     pred = torch.tensor([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]], dtype=torch.float32)
     target = torch.tensor([2, 1], dtype=torch.long)
