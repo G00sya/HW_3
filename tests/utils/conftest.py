@@ -52,6 +52,7 @@ def example_batch_tensors():
     target_data = torch.tensor([[8, 9, 0], [10, 11, 0]])
     return source_data, target_data
 
+
 @pytest.fixture
 def label_smoothing_loss_sample_data():
     pred = torch.tensor([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]], dtype=torch.float32)
