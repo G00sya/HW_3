@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 
 from src.model.residual_block import ResidualBlock
-from src.utils.lambda_wrapper import LambdaWrapper
 
 
 class EncoderBlock(nn.Module):
@@ -54,5 +53,5 @@ class EncoderBlock(nn.Module):
         if not isinstance(mask, torch.Tensor):
             raise TypeError(f"Mask must be an torch.Tensor, but got {type(mask)}")
 
-        outputs = self.__self_attention_block(inputs, LambdaWrapper(lambda x: self.__self_attn(x, x, x, mask)))
+        outputs = self.__self_attention_block(inputs, lambda x: self.__self_attn(x, x, x, mask))
         return self.__feed_forward_block(outputs, self.__feed_forward)
