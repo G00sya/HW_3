@@ -51,3 +51,19 @@ if __name__ == "__main__":
                 progress_bar.refresh()
 
         return epoch_loss / batches_count
+
+    def fit(model, criterion, optimizer, train_iter, epochs_count=1, val_iter=None):
+        best_val_loss = float("inf")
+        train_losses = []  # Track training losses per epoch
+
+        for epoch in range(epochs_count):
+            name_prefix = f"[{epoch + 1} / {epochs_count}] "
+            train_loss = do_epoch(model, criterion, train_iter, optimizer, name_prefix + "Train:")
+            train_losses.append(train_loss)  # Store training loss
+
+            if val_iter is not None:
+                val_loss = do_epoch(model, criterion, val_iter, None, name_prefix + "  Val:")
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+
+        return train_losses, best_val_loss  # Return training and validation losses
