@@ -14,96 +14,98 @@ if __name__ == "__main__":
     # Initialize SharedEmbedding with glove embedding
     shared_embedding = create_pretrained_embedding(path="./embeddings/glove.6B.300d.txt", padding_idx=0)
 
-    def do_epoch(
-        model: torch.nn.Module,
-        criterion: torch.nn.Module,
-        data_iter: Iterable[tuple[Tensor, Tensor, Tensor, Tensor]],
-        optimizer: Optional[torch.optim.Optimizer] = None,
-        name: Optional[str] = None,
-    ) -> float:
-        """
-        Performs a single training or validation epoch with progress tracking.
 
-        :param model: Neural network model to train/evaluate. Must implement forward().
-        :param criterion: Loss function (e.g., CrossEntropyLoss).
-        :param data_iter: Iterator yielding batches of (source, target) pairs.
-        :param optimizer: Optimizer for parameter updates. None for validation.
-        :param name: Prefix for progress bar descriptions (e.g., "Train").
+def do_epoch(
+    model: torch.nn.Module,
+    criterion: torch.nn.Module,
+    data_iter: Iterable[tuple[Tensor, Tensor, Tensor, Tensor]],
+    optimizer: Optional[torch.optim.Optimizer] = None,
+    name: Optional[str] = None,
+) -> float:
+    """
+    Performs a single training or validation epoch with progress tracking.
 
-        :return: Average loss across all batches in the epoch.
-        """
-        epoch_loss = 0
+    :param model: Neural network model to train/evaluate. Must implement forward().
+    :param criterion: Loss function (e.g., CrossEntropyLoss).
+    :param data_iter: Iterator yielding batches of (source, target) pairs.
+    :param optimizer: Optimizer for parameter updates. None for validation.
+    :param name: Prefix for progress bar descriptions (e.g., "Train").
 
-        is_train = optimizer is not None
-        name = name or ""
-        model.train(is_train)
+    :return: Average loss across all batches in the epoch.
+    """
+    epoch_loss = 0
 
-        batches_count = len(data_iter)
+    is_train = optimizer is not None
+    name = name or ""
+    model.train(is_train)
 
-        with torch.autograd.set_grad_enabled(is_train):
-            with tqdm(total=batches_count) as progress_bar:
-                for i, batch in enumerate(data_iter):
-                    source_inputs, target_inputs, source_mask, target_mask = convert_batch(batch)
-                    logits = model.forward(source_inputs, target_inputs[:, :-1], source_mask, target_mask[:, :-1, :-1])
+    batches_count = len(data_iter)
 
-                    logits = logits.contiguous().view(-1, logits.shape[-1])
-                    target = target_inputs[:, 1:].contiguous().view(-1)
-                    loss = criterion(logits, target)
+    with torch.autograd.set_grad_enabled(is_train):
+        with tqdm(total=batches_count) as progress_bar:
+            for i, batch in enumerate(data_iter):
+                source_inputs, target_inputs, source_mask, target_mask = convert_batch(batch)
+                logits = model.forward(source_inputs, target_inputs[:, :-1], source_mask, target_mask[:, :-1, :-1])
 
-                    epoch_loss += loss.item()
+                logits = logits.contiguous().view(-1, logits.shape[-1])
+                target = target_inputs[:, 1:].contiguous().view(-1)
+                loss = criterion(logits, target)
 
-                    if optimizer:
-                        optimizer.optimizer.zero_grad()
-                        loss.backward()
-                        optimizer.step()
+                epoch_loss += loss.item()
 
-                    progress_bar.update()
-                    progress_bar.set_description(
-                        "{:>5s} Loss = {:.5f}, PPX = {:.2f}".format(name, loss.item(), math.exp(loss.item()))
-                    )
+                if optimizer:
+                    optimizer.optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
 
+                progress_bar.update()
                 progress_bar.set_description(
-                    "{:>5s} Loss = {:.5f}, PPX = {:.2f}".format(
-                        name, epoch_loss / batches_count, math.exp(epoch_loss / batches_count)
-                    )
+                    "{:>5s} Loss = {:.5f}, PPX = {:.2f}".format(name, loss.item(), math.exp(loss.item()))
                 )
-                progress_bar.refresh()
 
-        return epoch_loss / batches_count
+            progress_bar.set_description(
+                "{:>5s} Loss = {:.5f}, PPX = {:.2f}".format(
+                    name, epoch_loss / batches_count, math.exp(epoch_loss / batches_count)
+                )
+            )
+            progress_bar.refresh()
 
-    def fit(
-        model: torch.nn.Module,
-        criterion: torch.nn.Module,
-        optimizer: torch.optim.Optimizer,
-        train_iter: Iterable[tuple[Tensor, Tensor, Tensor, Tensor]],
-        epochs_count: int = 1,
-        val_iter: Optional[Iterable[tuple[Tensor, Tensor, Tensor, Tensor]]] = None,
-    ) -> tuple[list[float], float]:
-        """
-        Trains the model for specified number of epochs with optional validation.
+    return epoch_loss / batches_count
 
-        :param model: Neural network model to train.
-        :param criterion: Loss function used for optimization.
-        :param optimizer: Optimizer for parameter updates.
-        :param train_iter: Training data iterator yielding batches of tensors
-               (source, target, source_mask, target_mask).
-        :param epochs_count: Number of complete passes through the training data. Default: 1.
-        :param val_iter: Optional validation data iterator with same format as train_iter. Default: None.
-        :return: Tuple containing (training_losses, best_validation_loss).
-                 training_losses: List of average training losses per epoch.
-                 best_validation_loss: Lowest validation loss encountered (inf if no validation).
-        """
-        best_val_loss = float("inf")
-        train_losses = []  # Track training losses per epoch
 
-        for epoch in range(epochs_count):
-            name_prefix = f"[{epoch + 1} / {epochs_count}] "
-            train_loss = do_epoch(model, criterion, train_iter, optimizer, name_prefix + "Train:")
-            train_losses.append(train_loss)  # Store training loss
+def fit(
+    model: torch.nn.Module,
+    criterion: torch.nn.Module,
+    optimizer: torch.optim.Optimizer,
+    train_iter: Iterable[tuple[Tensor, Tensor, Tensor, Tensor]],
+    epochs_count: int = 1,
+    val_iter: Optional[Iterable[tuple[Tensor, Tensor, Tensor, Tensor]]] = None,
+) -> tuple[list[float], float]:
+    """
+    Trains the model for specified number of epochs with optional validation.
 
-            if val_iter is not None:
-                val_loss = do_epoch(model, criterion, val_iter, None, name_prefix + "  Val:")
-                if val_loss < best_val_loss:
-                    best_val_loss = val_loss
+    :param model: Neural network model to train.
+    :param criterion: Loss function used for optimization.
+    :param optimizer: Optimizer for parameter updates.
+    :param train_iter: Training data iterator yielding batches of tensors
+           (source, target, source_mask, target_mask).
+    :param epochs_count: Number of complete passes through the training data. Default: 1.
+    :param val_iter: Optional validation data iterator with same format as train_iter. Default: None.
+    :return: Tuple containing (training_losses, best_validation_loss).
+             training_losses: List of average training losses per epoch.
+             best_validation_loss: Lowest validation loss encountered (inf if no validation).
+    """
+    best_val_loss = float("inf")
+    train_losses = []  # Track training losses per epoch
 
-        return train_losses, best_val_loss  # Return training and validation losses
+    for epoch in range(epochs_count):
+        name_prefix = f"[{epoch + 1} / {epochs_count}] "
+        train_loss = do_epoch(model, criterion, train_iter, optimizer, name_prefix + "Train:")
+        train_losses.append(train_loss)  # Store training loss
+
+        if val_iter is not None:
+            val_loss = do_epoch(model, criterion, val_iter, None, name_prefix + "  Val:")
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+
+    return train_losses, best_val_loss  # Return training and validation losses
