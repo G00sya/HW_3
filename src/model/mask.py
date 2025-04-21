@@ -1,7 +1,10 @@
+from typing import Tuple
+
 import torch
+import torch.nn as nn
 
 
-def subsequent_mask(size):
+def subsequent_mask(size: int) -> torch.Tensor:
     """
     Creates a triangular mask to prevent attention to future positions.
 
@@ -21,7 +24,11 @@ def subsequent_mask(size):
     return mask.unsqueeze(0) == 0
 
 
-def make_mask(source_inputs, target_inputs, pad_idx):
+def make_mask(
+    source_inputs: torch.Tensor,
+    target_inputs: torch.Tensor,
+    pad_idx: int,
+) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Creates masks for source and target sequences.
 
@@ -44,7 +51,7 @@ def make_mask(source_inputs, target_inputs, pad_idx):
     return source_mask, target_mask
 
 
-def convert_batch(batch, pad_idx=1):
+def convert_batch(batch: nn.Module, pad_idx: int = 1) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Converts a batch of data for the model.
 
     Transposes source/target sequences and creates masks for padding and future tokens.
