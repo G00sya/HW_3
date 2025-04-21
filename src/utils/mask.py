@@ -50,18 +50,21 @@ def make_mask(
 
 
 def convert_batch(batch: nn.Module, pad_idx: int = 1) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Converts a batch of data for the model.
+    """
+    Creates masks for source and target sequences.
 
-    Transposes source/target sequences and creates masks for padding and future tokens.
+    This function generates two masks:
+    1.  `source_mask`:  Prevents attention to padding tokens in the source sequence.
+    2.  `target_mask`: Prevents attention to padding tokens and future tokens in the target sequence.
 
-    Args:
-        batch: Batch object with `source` and `target` tensors (sequence_length, batch_size).
-        pad_idx: Index of the padding token.
+    :param batch:
+    :param pad_idx: The index of the padding token in the vocabulary.
 
-    Returns:
-        (source_inputs, target_inputs, source_mask, target_mask) where:
-            - *_inputs: Transposed input sequences (batch_size, sequence_length).
-            - *_mask: Masks to prevent attention to padding/future tokens.
+    :return: A tuple containing:
+        - source_mask: A boolean tensor of shape (batch_size, 1, source_seq_len) indicating
+          which source tokens are not padding.
+        - target_mask: A boolean tensor of shape (batch_size, target_seq_len, target_seq_len)
+          indicating which target tokens are valid (not padding and not future tokens).
     """
     source_inputs, target_inputs = batch.source.transpose(0, 1), batch.target.transpose(0, 1)
     source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx)
