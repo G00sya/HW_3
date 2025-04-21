@@ -144,11 +144,11 @@ def valid_decoder_params():
 
 
 @pytest.fixture
-def decoder(valid_decoder_params):
+def init_decoder(valid_decoder_params):
     """Fixture to provide a pre-initialized Decoder."""
     vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate = valid_decoder_params
     shared_embedding = SharedEmbedding(vocab_size=vocab_size, d_model=d_model)
-    return Decoder(vocab_size, d_model, d_ff, blocks_count, heads_count, dropout_rate, shared_embedding)
+    return Decoder(d_model, d_ff, blocks_count, heads_count, dropout_rate, shared_embedding)
 
 
 @pytest.fixture
