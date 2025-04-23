@@ -76,7 +76,7 @@ class TestData:
         assert isinstance(test_iter, BucketIterator)
 
         # Assert vocab size
-        assert len(data._Data__word_field.vocab) > 0
+        assert len(data.word_field.vocab) > 0
 
         # Check if batch sizes are correct
         for batch in train_iter:

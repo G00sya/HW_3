@@ -1,18 +1,18 @@
 import math
+import os
 from typing import Iterable, Optional
 
 import torch
-from torch import Tensor
+from torch import Tensor, nn
 from tqdm.auto import tqdm
 
+from src.data.prepare_data import Data
+from src.model.encoder_decoder import EncoderDecoder
 from src.utils.mask import convert_batch
+from src.utils.noam_opt import NoamOpt
 from src.utils.shared_embedding import create_pretrained_embedding
 
 tqdm.get_lock().locks = []
-
-if __name__ == "__main__":
-    # Initialize SharedEmbedding with glove embedding
-    shared_embedding = create_pretrained_embedding(path="./embeddings/glove.6B.300d.txt", padding_idx=0)
 
 
 def do_epoch(
@@ -111,17 +111,23 @@ def fit(
     return train_losses, best_val_loss  # Return training and validation losses
 
 
-if torch.cuda.is_available():
-    DEVICE = torch.device("cuda")
-else:
-    DEVICE = torch.device("cpu")
+if __name__ == "__main__":
+    # Initialize SharedEmbedding with glove embedding
+    shared_embedding = create_pretrained_embedding(path="./embeddings/glove.6B.300d.txt", padding_idx=0)
+    if torch.cuda.is_available():
+        DEVICE = torch.device("cuda")
+    else:
+        DEVICE = torch.device("cpu")
 
+    data = Data()
+    train_iter, test_iter = data.init_dataset(os.path.join("data", "raw", "news.csv"))
+    model = EncoderDecoder(
+        source_vocab_size=len(data.word_field.vocab), target_vocab_size=len(data.word_field.vocab)
+    ).to(DEVICE)
 
-# model = EncoderDecoder(source_vocab_size=len(word_field.vocab), target_vocab_size=len(word_field.vocab)).to(DEVICE)
-#
-# pad_idx = word_field.vocab.stoi["<pad>"]
-# criterion = nn.CrossEntropyLoss(ignore_index=pad_idx).to(DEVICE)
-#
-# optimizer = NoamOpt(model.d_model)
+    pad_idx = data.word_field.vocab.stoi["<pad>"]
+    criterion = nn.CrossEntropyLoss(ignore_index=pad_idx).to(DEVICE)
 
-# fit(model, criterion, optimizer, train_iter, epochs_count=30, val_iter=test_iter)
+    optimizer = NoamOpt(model.d_model)
+
+    fit(model, criterion, optimizer, train_iter, epochs_count=30, val_iter=test_iter)
