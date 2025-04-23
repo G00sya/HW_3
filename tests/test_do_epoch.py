@@ -87,28 +87,6 @@ def test_batch_processing(setup):
     assert math.isclose(loss, 1.0, rel_tol=1e-3)
 
 
-# def test_progress_bar(setup):
-#     model, criterion, _, data_iter = setup
-#     model.forward.return_value = torch.randn(2 * 11, 100)
-#     criterion.return_value = torch.tensor(1.5)
-#
-#     # Create a mock progress bar instance
-#     mock_pbar = MagicMock()
-#     mock_pbar.update = Mock()
-#     mock_pbar.set_description = Mock()
-#
-#     # Patch tqdm to return our mock progress bar
-#     with patch('tqdm.tqdm', return_value=mock_pbar) as mock_tqdm:
-#         do_epoch(model, criterion, data_iter, None, "Test")
-#
-#         # Verify tqdm was called with correct total
-#         mock_tqdm.assert_called_once_with(total=len(data_iter))
-#
-#         # Verify progress updates
-#         assert mock_pbar.update.call_count == 2
-#         assert mock_pbar.set_description.call_count >= 2
-
-
 def test_loss_calculation(setup):
     model, criterion, _, data_iter = setup
     model.forward.return_value = torch.randn(2 * 11, 100)
@@ -117,34 +95,6 @@ def test_loss_calculation(setup):
     loss = do_epoch(model, criterion, data_iter, None)
 
     assert math.isclose(loss, 1.5, rel_tol=1e-3)
-
-
-# def test_teacher_forcing(setup):
-#     model, criterion, _, data_iter = setup
-#     batch = data_iter.batches[0]
-#
-#     # Configure mock to return real tensor
-#     model.forward.return_value = torch.randn(2 * 11, 100)
-#
-#     # Create a dummy progress bar that won't cause formatting issues
-#     mock_pbar = MagicMock()
-#     mock_pbar.update = Mock()
-#     mock_pbar.set_description = Mock(return_value=None)  # Returns None instead of mock
-#
-#     # Patch both possible tqdm import paths
-#     try:
-#         with patch('src.train.tqdm', return_value=mock_pbar), \
-#                 patch('src.train.math.exp', return_value=1.0):
-#             do_epoch(model, criterion, data_iter, None)
-#     except AttributeError:
-#         with patch('src.train.tqdm.tqdm', return_value=mock_pbar), \
-#                 patch('src.train.math.exp', return_value=1.0):
-#             do_epoch(model, criterion, data_iter, None)
-#
-#     # Verify teacher forcing implementation
-#     called_target = model.forward.call_args[0][1]
-#     expected_target = batch[1][:, :-1]
-#     assert torch.equal(called_target, expected_target)
 
 
 def test_empty_iterator():
