@@ -3,7 +3,7 @@ import os
 from typing import Iterable, Optional
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 from tqdm.auto import tqdm
 
 from src.data.prepare_data import Data
@@ -50,8 +50,7 @@ def do_epoch(
 
                 logits = logits.contiguous().view(-1, logits.shape[-1])
                 target = target_inputs[:, 1:].contiguous().view(-1)
-                label_smoothing_loss = LabelSmoothingLoss()
-                loss = label_smoothing_loss.forward(logits, target)
+                loss = criterion(logits, target)
 
                 epoch_loss += loss.item()
 
@@ -128,7 +127,7 @@ if __name__ == "__main__":
     ).to(DEVICE)
 
     pad_idx = data.word_field.vocab.stoi["<pad>"]
-    criterion = nn.CrossEntropyLoss(ignore_index=pad_idx).to(DEVICE)
+    criterion = LabelSmoothingLoss(pad_idx=pad_idx).to(DEVICE)
 
     optimizer = NoamOpt(model.d_model)
 
