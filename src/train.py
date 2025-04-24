@@ -8,6 +8,7 @@ from tqdm.auto import tqdm
 
 from src.data.prepare_data import Data
 from src.model.encoder_decoder import EncoderDecoder
+from src.utils.label_smoothing_loss import LabelSmoothingLoss
 from src.utils.mask import convert_batch
 from src.utils.noam_opt import NoamOpt
 from src.utils.shared_embedding import create_pretrained_embedding
@@ -49,7 +50,8 @@ def do_epoch(
 
                 logits = logits.contiguous().view(-1, logits.shape[-1])
                 target = target_inputs[:, 1:].contiguous().view(-1)
-                loss = criterion(logits, target)
+                label_smoothing_loss = LabelSmoothingLoss()
+                loss = label_smoothing_loss.forward(logits, target)
 
                 epoch_loss += loss.item()
 
