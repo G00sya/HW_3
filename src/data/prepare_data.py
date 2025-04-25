@@ -22,8 +22,8 @@ class Data:
         self.__logger = setup_logger("prepare_data")
         self.__device = setup_device()
 
-        self.__word_field = Field(tokenize="moses", init_token=Tokens.BOS, eos_token=Tokens.EOS, lower=True)
-        self.__fields = [("source", self.__word_field), ("target", self.__word_field)]
+        self.word_field = Field(tokenize="moses", init_token=Tokens.BOS, eos_token=Tokens.EOS, lower=True)
+        self.__fields = [("source", self.word_field), ("target", self.word_field)]
 
     def _get_data_pd(self, csv_path: str) -> pd.DataFrame | None:
         """
@@ -48,16 +48,16 @@ class Data:
         :return: Train and test dataset.
         """
         examples = []
-        for _, row in tqdm(data.iterrows(), total=len(data)):
-            source_text = self.__word_field.preprocess(row.text)
-            target_text = self.__word_field.preprocess(row.title)
+        for _, row in tqdm(data.iterrows(), total=len(data), desc="Creating datasets"):
+            source_text = self.word_field.preprocess(row.text)
+            target_text = self.word_field.preprocess(row.title)
             examples.append(Example.fromlist([source_text, target_text], self.__fields))
 
         dataset = Dataset(examples, self.__fields)
         train_dataset, test_dataset = dataset.split(split_ratio=split_ratio)
 
-        self.__logger.info("Train size =", len(train_dataset))
-        self.__logger.info("Test size =", len(test_dataset))
+        self.__logger.info(f"Train size = {len(train_dataset)}")
+        self.__logger.info(f"Test size = {len(test_dataset)}")
         return train_dataset, test_dataset
 
     def init_dataset(
@@ -77,8 +77,8 @@ class Data:
             return None
         train_dataset, test_dataset = self._create_datasets(data, split_ratio)
 
-        self.__word_field.build_vocab(train_dataset, min_freq=min_frequency)
-        self.__logger.info("Vocab size =", len(self.__word_field.vocab))
+        self.word_field.build_vocab(train_dataset, min_freq=min_frequency)
+        self.__logger.info(f"Vocab size = {len(self.word_field.vocab)}")
 
         train_iter, test_iter = BucketIterator.splits(
             datasets=(train_dataset, test_dataset),

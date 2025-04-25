@@ -80,13 +80,13 @@ class SharedEmbedding(nn.Module):
         return self.__embedding(x)
 
 
-def create_pretrained_embedding(path: str, padding_idx: int | None = None) -> SharedEmbedding:
+def create_pretrained_embedding(path: str, padding_idx: int | None = None) -> (SharedEmbedding, int, int):
     """
     Create shared embedding instance with pretrained embedding which is red using path.
 
     :param path: Full path to pretrained embedding file.
     :param padding_idx: The index of the token that should be padding. Must be a non-negative integer or None.
-    :return: Instance of SharedEmbedding.
+    :return: Instance of SharedEmbedding, vocab_size and d_model.
     """
     # Read a file and get parameters
     glove_model = KeyedVectors.load_word2vec_format(path, binary=False, no_header=True)
@@ -97,4 +97,4 @@ def create_pretrained_embedding(path: str, padding_idx: int | None = None) -> Sh
     shared_embedding = SharedEmbedding(
         vocab_size=vocab_size, d_model=d_model, padding_idx=padding_idx, pretrained_embeddings=embedding_matrix
     )
-    return shared_embedding
+    return shared_embedding, vocab_size, d_model
