@@ -122,9 +122,7 @@ if __name__ == "__main__":
 
     data = Data()
     train_iter, test_iter = data.init_dataset(os.path.join("data", "raw", "news.csv"))
-    model = EncoderDecoder(
-        source_vocab_size=len(data.word_field.vocab), target_vocab_size=len(data.word_field.vocab)
-    ).to(DEVICE)
+    model = EncoderDecoder(target_vocab_size=len(data.word_field.vocab), shared_embedding=shared_embedding).to(DEVICE)
 
     pad_idx = data.word_field.vocab.stoi["<pad>"]
     criterion = LabelSmoothingLoss(pad_idx=pad_idx).to(DEVICE)
