@@ -56,8 +56,8 @@ class Data:
         dataset = Dataset(examples, self.__fields)
         train_dataset, test_dataset = dataset.split(split_ratio=split_ratio)
 
-        self.__logger.info("Train size =", len(train_dataset))
-        self.__logger.info("Test size =", len(test_dataset))
+        self.__logger.info(f"Train size = {len(train_dataset)}")
+        self.__logger.info(f"Test size = {len(test_dataset)}")
         return train_dataset, test_dataset
 
     def init_dataset(
@@ -78,7 +78,7 @@ class Data:
         train_dataset, test_dataset = self._create_datasets(data, split_ratio)
 
         self.word_field.build_vocab(train_dataset, min_freq=min_frequency)
-        self.__logger.info("Vocab size =", len(self.word_field.vocab))
+        self.__logger.info(f"Vocab size = {len(self.word_field.vocab)}")
 
         train_iter, test_iter = BucketIterator.splits(
             datasets=(train_dataset, test_dataset),
