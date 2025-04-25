@@ -48,7 +48,7 @@ class Data:
         :return: Train and test dataset.
         """
         examples = []
-        for _, row in tqdm(data.iterrows(), total=len(data)):
+        for _, row in tqdm(data.iterrows(), total=len(data), desc="Creating datasets"):
             source_text = self.word_field.preprocess(row.text)
             target_text = self.word_field.preprocess(row.title)
             examples.append(Example.fromlist([source_text, target_text], self.__fields))
