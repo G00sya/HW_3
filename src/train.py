@@ -1,9 +1,9 @@
 import math
 import os
-from typing import Iterable, Optional
 
 import torch
-from torch import Tensor
+import torch.optim as optim
+from torchtext.data import BucketIterator
 from tqdm.auto import tqdm
 
 from src.data.prepare_data import Data
@@ -19,9 +19,10 @@ tqdm.get_lock().locks = []
 def do_epoch(
     model: torch.nn.Module,
     criterion: torch.nn.Module,
-    data_iter: Iterable[tuple[Tensor, Tensor, Tensor, Tensor]],
-    optimizer: Optional[torch.optim.Optimizer] = None,
-    name: Optional[str] = None,
+    data_iter: BucketIterator,
+    optimizer: torch.optim.Optimizer | None = None,
+    scheduler: NoamOpt | None = None,
+    name: str | None = None,
 ) -> float:
     """
     Performs a single training or validation epoch with progress tracking.
@@ -30,6 +31,7 @@ def do_epoch(
     :param criterion: Loss function (e.g., CrossEntropyLoss).
     :param data_iter: Iterator yielding batches of (source, target) pairs.
     :param optimizer: Optimizer for parameter updates. None for validation.
+    :param scheduler: Scheduler for learning rate managing. None for validation.
     :param name: Prefix for progress bar descriptions (e.g., "Train").
 
     :return: Average loss across all batches in the epoch.
@@ -55,8 +57,9 @@ def do_epoch(
                 epoch_loss += loss.item()
 
                 if optimizer:
-                    optimizer.optimizer.zero_grad()
+                    optimizer.zero_grad()
                     loss.backward()
+                    scheduler.step()
                     optimizer.step()
 
                 progress_bar.update()
@@ -78,9 +81,10 @@ def fit(
     model: torch.nn.Module,
     criterion: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
-    train_iter: Iterable[tuple[Tensor, Tensor, Tensor, Tensor]],
+    scheduler: NoamOpt,
+    train_iter: BucketIterator,
     epochs_count: int = 1,
-    val_iter: Optional[Iterable[tuple[Tensor, Tensor, Tensor, Tensor]]] = None,
+    val_iter: BucketIterator | None = None,
 ) -> tuple[list[float], float]:
     """
     Trains the model for specified number of epochs with optional validation.
@@ -88,7 +92,8 @@ def fit(
     :param model: Neural network model to train.
     :param criterion: Loss function used for optimization.
     :param optimizer: Optimizer for parameter updates.
-    :param train_iter: Training data iterator yielding batches of tensors
+    :param scheduler: Scheduler for learning rate managing.
+    :param train_iter: Training data BucketIterator yielding batches of tensors
            (source, target, source_mask, target_mask).
     :param epochs_count: Number of complete passes through the training data. Default: 1.
     :param val_iter: Optional validation data iterator with same format as train_iter. Default: None.
@@ -101,7 +106,7 @@ def fit(
 
     for epoch in range(epochs_count):
         name_prefix = f"[{epoch + 1} / {epochs_count}] "
-        train_loss = do_epoch(model, criterion, train_iter, optimizer, name_prefix + "Train:")
+        train_loss = do_epoch(model, criterion, train_iter, optimizer, scheduler, name_prefix + "Train:")
         train_losses.append(train_loss)  # Store training loss
 
         if val_iter is not None:
@@ -114,19 +119,24 @@ def fit(
 
 if __name__ == "__main__":
     # Initialize SharedEmbedding with glove embedding
-    shared_embedding = create_pretrained_embedding(path="./embeddings/glove.6B.300d.txt", padding_idx=0)
+    shared_embedding, vocab_size, d_model = create_pretrained_embedding(
+        path="../embeddings/glove.6B.300d.txt", padding_idx=0
+    )
     if torch.cuda.is_available():
         DEVICE = torch.device("cuda")
     else:
         DEVICE = torch.device("cpu")
 
     data = Data()
-    train_iter, test_iter = data.init_dataset(os.path.join("data", "raw", "news.csv"))
-    model = EncoderDecoder(target_vocab_size=len(data.word_field.vocab), shared_embedding=shared_embedding).to(DEVICE)
+    train_iter, test_iter = data.init_dataset(os.path.join("..", "data", "raw", "news.csv"))
+    model = EncoderDecoder(
+        target_vocab_size=vocab_size, shared_embedding=shared_embedding, d_model=d_model, heads_count=10
+    ).to(DEVICE)
 
     pad_idx = data.word_field.vocab.stoi["<pad>"]
     criterion = LabelSmoothingLoss(pad_idx=pad_idx).to(DEVICE)
 
-    optimizer = NoamOpt(model.d_model)
+    optimizer = optim.Adam(model.parameters())
+    scheduler = NoamOpt(model.d_model, optimizer)
 
-    fit(model, criterion, optimizer, train_iter, epochs_count=30, val_iter=test_iter)
+    fit(model, criterion, optimizer, scheduler, train_iter, epochs_count=30, val_iter=test_iter)
