@@ -8,6 +8,7 @@ from tqdm.auto import tqdm
 
 from src.data.prepare_data import Data
 from src.model.encoder_decoder import EncoderDecoder
+from src.utils.device import setup_device
 from src.utils.label_smoothing_loss import LabelSmoothingLoss
 from src.utils.mask import convert_batch
 from src.utils.noam_opt import NoamOpt
@@ -118,15 +119,11 @@ def fit(
 
 
 if __name__ == "__main__":
+    DEVICE = setup_device()
     # Initialize SharedEmbedding with glove embedding
     shared_embedding, vocab_size, d_model = create_pretrained_embedding(
         path="../embeddings/glove.6B.300d.txt", padding_idx=0
     )
-    if torch.cuda.is_available():
-        DEVICE = torch.device("cuda")
-    else:
-        DEVICE = torch.device("cpu")
-
     data = Data()
     train_iter, test_iter = data.init_dataset(os.path.join("..", "data", "raw", "news.csv"))
     model = EncoderDecoder(
