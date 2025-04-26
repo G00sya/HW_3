@@ -127,7 +127,10 @@ if __name__ == "__main__":
     data = Data()
     train_iter, test_iter = data.init_dataset(os.path.join("..", "data", "raw", "news.csv"))
     model = EncoderDecoder(
-        target_vocab_size=vocab_size, shared_embedding=shared_embedding, d_model=d_model, heads_count=10
+        target_vocab_size=vocab_size,
+        shared_embedding=shared_embedding,
+        d_model=d_model,
+        heads_count=10,  # Because we use d_model=300, and it must be divisible by heads_count
     ).to(DEVICE)
 
     pad_idx = data.word_field.vocab.stoi["<pad>"]
