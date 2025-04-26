@@ -111,7 +111,7 @@ def fit(
         train_losses.append(train_loss)  # Store training loss
 
         if val_iter is not None:
-            val_loss = do_epoch(model, criterion, val_iter, None, name_prefix + "  Val:")
+            val_loss = do_epoch(model, criterion, val_iter, None, None, name_prefix + "  Val:")
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
 
