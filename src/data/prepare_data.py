@@ -5,7 +5,6 @@ import pandas as pd
 import torch
 from navec import Navec
 from torchtext.data import BucketIterator, Dataset, Example, Field
-from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import Vocab
 from tqdm.auto import tqdm
 
@@ -18,27 +17,6 @@ class Tokens(Enum):
     EOS = "</s>"
     PAD = "<pad>"
     UNK = "<unk>"
-
-
-class NavecPreprocessor:
-    def __init__(self, navec, lower=True, tokenizer="moses"):
-        self.navec = navec
-        self.lower = lower
-        self.tokenizer = get_tokenizer(tokenizer)
-
-    def __call__(self, word_list: list[str]) -> torch.Tensor:
-        """
-        Process an already-tokenized list of words.
-        :param word_list: Pre-tokenized words.
-        :return: Navec indices.
-        """
-        # Lowercasing
-        if self.lower:
-            word_list = [word.lower() for word in word_list]
-
-        # Navec index lookup with fallback to UNK
-        indices = [self.navec.get(word, self.navec[Tokens.UNK.value]) for word in word_list]
-        return torch.tensor(indices, dtype=torch.float32)
 
 
 class Data:
@@ -56,13 +34,12 @@ class Data:
         # Initialize Field with Navec's special tokens
         self.__navec = navec
         self.word_field = Field(
-            init_token=torch.tensor(self.__navec[Tokens.BOS.value]),
-            eos_token=torch.tensor(self.__navec[Tokens.EOS.value]),
-            pad_token=torch.tensor(self.__navec[Tokens.PAD.value]),
-            unk_token=torch.tensor(self.__navec[Tokens.UNK.value]),
-            use_vocab=False,
-            dtype=torch.float32,
-            preprocessing=NavecPreprocessor(navec=self.__navec, lower=True),
+            tokenize="moses",
+            init_token=Tokens.BOS,
+            eos_token=Tokens.EOS,
+            lower=True,
+            pad_token=Tokens.PAD,
+            unk_token=Tokens.UNK,
         )
         self.__fields = [("source", self.word_field), ("target", self.word_field)]
 
@@ -90,8 +67,8 @@ class Data:
         """
         examples = []
         for _, row in tqdm(data.iterrows(), total=len(data), desc="Creating datasets"):
-            source_text = row.text
-            target_text = row.title
+            source_text = self.word_field.preprocess(row.text)
+            target_text = self.word_field.preprocess(row.title)
             examples.append(Example.fromlist([source_text, target_text], self.__fields))
 
         dataset = Dataset(examples, self.__fields)
@@ -118,7 +95,7 @@ class Data:
         train_dataset, test_dataset = self._create_datasets(data, split_ratio)
 
         # Build vocab using Navec's vocabulary
-        # self._build_vocab_with_navec()
+        self._build_vocab_with_navec()
 
         train_iter, test_iter = BucketIterator.splits(
             datasets=(train_dataset, test_dataset),
