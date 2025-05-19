@@ -62,6 +62,7 @@ class EncoderDecoder(nn.Module):
 
         # Xavier initialization for all weight matrices in the model
         for p in self.parameters():
+            p = p.float()
             if p.dim() > 1:  # Only initialize matrices (not vectors/scalars)
                 nn.init.xavier_uniform_(p)
 

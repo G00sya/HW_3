@@ -120,12 +120,11 @@ def fit(
 
 if __name__ == "__main__":
     DEVICE = setup_device()
-    # Initialize SharedEmbedding with glove embedding
-    shared_embedding, vocab_size, d_model = create_pretrained_embedding(
-        path="../embeddings/glove.6B.300d.txt", padding_idx=0
-    )
-    data = Data()
+    # Initialize SharedEmbedding with glove embedding (500.000 words, embedding=300)
+    shared_embedding, navec = create_pretrained_embedding(path="../embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar")
+    data = Data(navec)
     train_iter, test_iter = data.init_dataset(os.path.join("..", "data", "raw", "news.csv"))
+    vocab_size, d_model = map(int, navec.pq.shape)
     model = EncoderDecoder(
         target_vocab_size=vocab_size,
         shared_embedding=shared_embedding,
@@ -133,7 +132,7 @@ if __name__ == "__main__":
         heads_count=10,  # Because we use d_model=300, and it must be divisible by heads_count
     ).to(DEVICE)
 
-    pad_idx = data.word_field.vocab.stoi["<pad>"]
+    pad_idx = navec.vocab.pad_id
     criterion = LabelSmoothingLoss(pad_idx=pad_idx).to(DEVICE)
 
     optimizer = optim.Adam(model.parameters())

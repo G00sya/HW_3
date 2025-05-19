@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from gensim.models import KeyedVectors
+from navec import Navec
+from slovnet.model.emb import NavecEmbedding
 
 
 class SharedEmbedding(nn.Module):
@@ -14,7 +15,7 @@ class SharedEmbedding(nn.Module):
         vocab_size: int,
         d_model: int,
         padding_idx: int | None = None,
-        pretrained_embeddings: torch.Tensor | None = None,
+        pretrained_embedding: nn.Module | None = None,
     ):
         """
         Initializes SharedEmbedding.
@@ -22,8 +23,8 @@ class SharedEmbedding(nn.Module):
         :param vocab_size: The size of the vocabulary (number of embeddings). Must be a positive integer.
         :param d_model: The dimensionality of each embedding. Must be a positive integer.
         :param padding_idx: The index of the token that should be padding. Must be a non-negative integer or None.
-        :param pretrained_embeddings: Pre-trained embeddings to initialize the embedding layer with. Must be a torch.
-                                    Tensor or None.
+        :param pretrained_embedding: Pre-trained embedding to initialize the embedding layer with.
+                                    Must be a nn.Module or None.
                                     If provided, vocab_size and d_model will be inferred from the shape of this tensor.
                                     If None, a new embedding layer will be initialized randomly.
 
@@ -33,20 +34,18 @@ class SharedEmbedding(nn.Module):
         :raises ValueError: If `d_model` is not positive.
         :raises TypeError: If `padding_idx` is not an integer or None.
         :raises ValueError: If `padding_idx` is negative.
-        :raises TypeError: If `pretrained_embeddings` is not a torch.Tensor or None.
-        :raises ValueError: If `pretrained_embeddings` is provided
+        :raises TypeError: If `pretrained_embedding` is not a torch.Tensor or None.
+        :raises ValueError: If `pretrained_embedding` is provided
                                 and its shape is incompatible with vocab_size and d_model.
         """
         super().__init__()
 
-        if pretrained_embeddings is not None:
-            if not isinstance(pretrained_embeddings, torch.Tensor):
+        if pretrained_embedding is not None:
+            if not isinstance(pretrained_embedding, nn.Module):
                 raise TypeError(
-                    f"pretrained_embeddings must be a torch.Tensor or None, but got {type(pretrained_embeddings)}"
+                    f"pretrained_embedding must be a nn.Module or None, but got {type(pretrained_embedding)}"
                 )
-            self.__embedding = nn.Embedding.from_pretrained(
-                pretrained_embeddings, freeze=False, padding_idx=padding_idx
-            )
+            self.__embedding = pretrained_embedding
         else:
             if not isinstance(vocab_size, int):
                 raise TypeError(f"vocab_size must be an int, but got {type(vocab_size)}")
@@ -80,21 +79,20 @@ class SharedEmbedding(nn.Module):
         return self.__embedding(x)
 
 
-def create_pretrained_embedding(path: str, padding_idx: int | None = None) -> (SharedEmbedding, int, int):
+def create_pretrained_embedding(path: str) -> (SharedEmbedding, int, int, int, Navec):
     """
     Create shared embedding instance with pretrained embedding which is red using path.
 
     :param path: Full path to pretrained embedding file.
-    :param padding_idx: The index of the token that should be padding. Must be a non-negative integer or None.
-    :return: Instance of SharedEmbedding, vocab_size and d_model.
+    :return: Instance of SharedEmbedding and pretrained_embedding.
     """
-    # Read a file and get parameters
-    glove_model = KeyedVectors.load_word2vec_format(path, binary=False, no_header=True)
-    embedding_matrix = torch.tensor(glove_model.vectors)
-    vocab_size = embedding_matrix.shape[0]
-    d_model = embedding_matrix.shape[1]
+    navec = Navec.load(path)
+    vocab_size, d_model = map(int, navec.pq.shape)
+    pad_idx = navec.vocab.pad_id
+    pretrained_embedding = NavecEmbedding(navec)
 
     shared_embedding = SharedEmbedding(
-        vocab_size=vocab_size, d_model=d_model, padding_idx=padding_idx, pretrained_embeddings=embedding_matrix
+        vocab_size=vocab_size, d_model=d_model, padding_idx=pad_idx, pretrained_embedding=pretrained_embedding
     )
-    return shared_embedding, vocab_size, d_model
+
+    return shared_embedding, navec

@@ -1,7 +1,11 @@
+from collections import Counter
 from enum import Enum
 
 import pandas as pd
+import torch
+from gensim.models import KeyedVectors
 from torchtext.data import BucketIterator, Dataset, Example, Field
+from torchtext.vocab import Vocab
 from tqdm.auto import tqdm
 
 from src.utils.device import setup_device
@@ -11,6 +15,8 @@ from src.utils.logger import setup_logger
 class Tokens(Enum):
     BOS = "<s>"
     EOS = "</s>"
+    UNK = "<unk>"
+    PAD = "<pad>"
 
 
 class Data:
@@ -18,12 +24,43 @@ class Data:
     Class which initializes datasets for train and test data. Can download csv file if it is needed.
     """
 
-    def __init__(self):
+    def __init__(self, navec):
         self.__logger = setup_logger("prepare_data")
         self.__device = setup_device()
+        self.__navec = self._build_keyed_vectors(navec)
 
-        self.word_field = Field(tokenize="moses", init_token=Tokens.BOS, eos_token=Tokens.EOS, lower=True)
+        self.word_field = Field(
+            tokenize="moses",
+            init_token=Tokens.BOS,
+            eos_token=Tokens.EOS,
+            pad_token=Tokens.PAD,
+            unk_token=Tokens.UNK,
+            use_vocab=True,
+        )
         self.__fields = [("source", self.word_field), ("target", self.word_field)]
+
+    def _build_keyed_vectors(self, navec) -> KeyedVectors:
+        """
+        Builds a KeyedVectors object with pre-computed weights from Navec model.
+        :return: KeyedVectors model.
+        """
+        vector_size = navec.pq.dim  # Assuming self.pq.dim is the embedding dimension
+
+        # Get word list and weights
+        word_list = navec.vocab.words
+        weights = navec.pq.unpack()  # Assuming self.pq.unpack() returns a NumPy array of weights
+
+        # Create a dictionary mapping words to their vectors
+        word_vectors = {}
+        for word, vector in zip(word_list, weights):
+            word_vectors[word] = vector
+
+        # Create KeyedVectors object
+        model = KeyedVectors(vector_size)
+
+        # Load the precomputed vectors into the KeyedVectors object.
+        model.add_vectors(list(word_vectors.keys()), list(word_vectors.values()))  # load the weights
+        return model
 
     def _get_data_pd(self, csv_path: str) -> pd.DataFrame | None:
         """
@@ -77,7 +114,9 @@ class Data:
             return None
         train_dataset, test_dataset = self._create_datasets(data, split_ratio)
 
-        self.word_field.build_vocab(train_dataset, min_freq=min_frequency)
+        vocab, vectors = self._build_vocab_from_gensim()
+        self.word_field.vocab = vocab
+        self.word_field.embedding_matrix = vectors
         self.__logger.info(f"Vocab size = {len(self.word_field.vocab)}")
 
         train_iter, test_iter = BucketIterator.splits(
@@ -89,3 +128,31 @@ class Data:
         )
 
         return train_iter, test_iter
+
+    def _build_vocab_from_gensim(self) -> (Vocab, torch.Tensor):
+        """
+        Builds a torchtext Vocab object from a Gensim Word2Vec or FastText model.
+
+        :returns: A torchtext Vocab object. Also returns the embedding matrix as a Torch tensor.
+        """
+        # Get word counts from model's vocabulary
+        word_counts = Counter(self.__navec.key_to_index)
+
+        # Create the Vocab object
+        specials = [Tokens.BOS.value, Tokens.EOS.value, Tokens.UNK.value, Tokens.PAD.value]
+        vocab = Vocab(word_counts, specials=specials)
+
+        # Create an embedding matrix
+        embedding_dim = self.__navec.vector_size
+        vocab_size = len(vocab)
+        embedding_matrix = torch.zeros((vocab_size, embedding_dim))
+
+        # Populate the embedding matrix with pre-trained vectors
+        for i, word in enumerate(vocab.itos):  # itos for index to string
+            if word in self.__navec:
+                embedding_matrix[i] = torch.tensor(self.__navec[word])
+            else:
+                # Handle <BOS>, <EOS> with random initialization
+                embedding_matrix[i] = torch.randn(embedding_dim)
+
+        return vocab, embedding_matrix

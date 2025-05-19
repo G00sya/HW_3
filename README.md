@@ -49,8 +49,7 @@ rm data/raw/news.zip
 Для установки предобученного эмбединга
 ```bash
 mkdir -p ./embeddings
-wget -P ./embeddings https://huggingface.co/stanfordnlp/glove/resolve/main/glove.6B.zip
-unzip ./embeddings/glove.6B.zip -d ./embeddings/ && rm ./embeddings/glove.6B.zip
+wget -P ./embeddings https://storage.yandexcloud.net/natasha-navec/packs/navec_hudlit_v1_12B_500K_300d_100q.tar
 ```
 
 # Структура проекта
