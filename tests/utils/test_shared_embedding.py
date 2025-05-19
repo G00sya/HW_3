@@ -1,5 +1,10 @@
+from unittest.mock import MagicMock, patch
+
+import numpy as np
 import pytest
 import torch
+import torch.nn as nn
+from navec import Navec
 
 from src.utils.shared_embedding import SharedEmbedding, create_pretrained_embedding
 
@@ -49,9 +54,11 @@ class TestSharedEmbedding:
         d_model = 5
         padding_idx = 0
 
-        pretrained_embeddings = torch.randn(vocab_size, d_model)  # Example pre-trained embeddings
+        pretrained_embedding = nn.Embedding(
+            vocab_size, d_model, padding_idx=padding_idx
+        )  # Example pre-trained embedding
         shared_embedding = SharedEmbedding(
-            vocab_size=vocab_size, d_model=d_model, padding_idx=padding_idx, pretrained_embeddings=pretrained_embeddings
+            vocab_size=vocab_size, d_model=d_model, padding_idx=padding_idx, pretrained_embedding=pretrained_embedding
         )
         assert (
             shared_embedding._SharedEmbedding__embedding.num_embeddings == vocab_size
@@ -76,9 +83,9 @@ class TestSharedEmbedding:
         assert torch.allclose(token1_embedding, token2_embedding), "Embeddings for the same token should be the same."
 
     def test_invalid_pretrained_embedding(self):
-        pretrained_embeddings = "embedding"
+        pretrained_embedding = "embedding"
         with pytest.raises(TypeError):
-            SharedEmbedding(vocab_size=0, d_model=0, padding_idx=0, pretrained_embeddings=pretrained_embeddings)
+            SharedEmbedding(vocab_size=0, d_model=0, padding_idx=0, pretrained_embedding=pretrained_embedding)
 
     def test_init_vocab_size_type_error(self):
         """
@@ -169,21 +176,41 @@ class TestSharedEmbedding:
 
         assert output_tensor.shape == (3, d_model), "Incorrect shape with specified dtype."
 
+    @patch("navec.Navec.load")  # Mock Navec.load within your_module
+    def test_create_pretrained_embedding(self, mock_navec_load):
+        """Tests create_pretrained_embedding function with mocked Navec."""
 
-def test_create_pretrained_embedding(test_glove_file):
-    """
-    Tests that the create_pretrained_embedding function correctly loads and initializes a SharedEmbedding.
-    """
-    file, vocab_size, d_model = test_glove_file
-    padding_idx = 0
-    embedding_layer = create_pretrained_embedding(file, padding_idx)
+        # Mock Navec Object and its Attributes
+        mock_navec = MagicMock(spec=Navec)
 
-    # Assertions: Check that the SharedEmbedding is created correctly
-    assert isinstance(embedding_layer, SharedEmbedding)
+        # Mock navec.vocab
+        mock_vocab = MagicMock()
+        mock_vocab.word_ids = {}
+        mock_navec.vocab = mock_vocab
+        mock_navec.vocab.pad_id = 0
 
-    # Check vocab and embedding dims
-    assert embedding_layer._SharedEmbedding__embedding.num_embeddings == vocab_size
-    assert embedding_layer._SharedEmbedding__embedding.embedding_dim == d_model
+        # Mock navec.pq
+        mock_pq = MagicMock()
+        mock_pq.shape = (1000, 300)
+        mock_pq.indexes = np.zeros(5)
+        mock_pq.codes = np.zeros((5, 5, 5))
+        mock_navec.pq = mock_pq
 
-    # Check padding index:
-    assert embedding_layer._SharedEmbedding__embedding.padding_idx == padding_idx
+        # Mock navec.meta
+        mock_navec.meta = MagicMock()
+        mock_navec.meta.id = MagicMock()
+
+        # Set the return value of Navec.load to the mocked object
+        mock_navec_load.return_value = mock_navec
+
+        # Call the function
+        path = "dummy/path/to/embedding.vec"  # or any path
+        shared_embedding, returned_navec = create_pretrained_embedding(path)
+
+        # Check Navec.load was called with the correct path
+        mock_navec_load.assert_called_once_with(path)
+
+        # Check that SharedEmbedding was created with correct parameters
+        assert isinstance(shared_embedding, SharedEmbedding)
+        # Ensure correct return value
+        assert returned_navec is mock_navec

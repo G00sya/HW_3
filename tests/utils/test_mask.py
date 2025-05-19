@@ -14,9 +14,16 @@ def test_subsequent_mask_values():
     """Tests that subsequent_mask creates the correct triangular mask."""
     size = 4
     mask = subsequent_mask(size)
+
+    if torch.cuda.is_available():
+        DEVICE = torch.device("cuda")
+    else:
+        DEVICE = torch.device("cpu")
     expected_mask = torch.tensor(
         [[[True, False, False, False], [True, True, False, False], [True, True, True, False], [True, True, True, True]]]
     )
+
+    expected_mask = expected_mask.to(DEVICE)
     assert torch.equal(mask, expected_mask)
 
 

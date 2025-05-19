@@ -5,6 +5,7 @@ import torch
 from torch import nn
 
 from src.train import do_epoch
+from src.utils.noam_opt import NoamOpt
 
 
 class MockDataIter:
@@ -24,7 +25,7 @@ def setup():
     model = MagicMock(spec=nn.Module)
     criterion = MagicMock(spec=nn.Module)
     optimizer = MagicMock(spec=torch.optim.Optimizer)
-    optimizer.optimizer = MagicMock()
+    scheduler = MagicMock(spec=NoamOpt)
 
     # Create proper batch structure with requires_grad for training
     batch = (
@@ -40,43 +41,43 @@ def setup():
     # Mock convert_batch to return the batch as-is
     with patch("src.train.convert_batch") as mock_convert:
         mock_convert.side_effect = lambda x: x  # Just return the batch unchanged
-        yield model, criterion, optimizer, data_iter
+        yield model, criterion, optimizer, scheduler, data_iter
 
 
 def test_training_mode(setup):
-    model, criterion, optimizer, data_iter = setup
+    model, criterion, optimizer, scheduler, data_iter = setup
 
     # Create a tensor that requires grad for training
     mock_output = torch.randn(2 * 11, 100, requires_grad=True)
     model.forward.return_value = mock_output
     criterion.return_value = torch.tensor(1.23, requires_grad=True)
 
-    loss = do_epoch(model, criterion, data_iter, optimizer, "Train")
+    loss = do_epoch(model, criterion, data_iter, optimizer, scheduler, "Train")
 
     # Verify training mode behaviors
     model.train.assert_called_once_with(True)
-    assert optimizer.optimizer.zero_grad.call_count == 2
+    assert optimizer.zero_grad.call_count == 2
     assert optimizer.step.call_count == 2
     assert isinstance(loss, float)
 
 
 def test_validation_mode(setup):
-    model, criterion, _, data_iter = setup
+    model, criterion, _, scheduler, data_iter = setup
     model.forward.return_value = torch.randn(2 * 11, 100)
     criterion.return_value = torch.tensor(2.34)
 
-    loss = do_epoch(model, criterion, data_iter, None, "Val")
+    loss = do_epoch(model, criterion, data_iter, None, scheduler, "Val")
 
     model.train.assert_called_once_with(False)
     assert isinstance(loss, float)
 
 
 def test_batch_processing(setup):
-    model, criterion, _, data_iter = setup
+    model, criterion, _, scheduler, data_iter = setup
     model.forward.return_value = torch.randn(2 * 11, 100)
     criterion.return_value = torch.tensor(1.0)
 
-    do_epoch(model, criterion, data_iter, None)
+    do_epoch(model, criterion, data_iter, None, scheduler, None)
 
     assert model.forward.call_count == 2
 

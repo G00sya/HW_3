@@ -26,11 +26,11 @@ def sample_optimizer(simple_model_for_noam_opt):
 
 
 @pytest.fixture
-def test_glove_file(tmp_path):  # Added tmp_path argument
+def test_embedding_file(tmp_path):  # Added tmp_path argument
     """
-    Fixture to create a dummy GloVe file for testing and clean it up afterwards using pytest's tmp_path.
+    Fixture to create a dummy embedding file for testing and clean it up afterwards using pytest's tmp_path.
     """
-    test_embedding_path = tmp_path / "test_glove.txt"  # Create a Path object
+    test_embedding_path = tmp_path / "test_embedding.txt"  # Create a Path object
     test_vocab_size = 10
     test_d_model = 5
 
