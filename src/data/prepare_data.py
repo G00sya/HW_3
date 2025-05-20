@@ -98,7 +98,7 @@ class Data:
         return train_dataset, test_dataset
 
     def init_dataset(
-        self, csv_path: str, batch_sizes: tuple = (16, 32), split_ratio: float = 0.85, min_frequency: float = 0.7
+        self, csv_path: str, batch_sizes: tuple = (16, 32), split_ratio: float = 0.85
     ) -> tuple[BucketIterator, BucketIterator] | None:
         """
         Initialize train and test BucketIterator from csv file.
@@ -106,7 +106,6 @@ class Data:
         :param csv_path: Full path to csv.
         :param batch_sizes: Batch sizes for iterator (train and test).
         :param split_ratio: Coefficient for splitting dataset to test and train.
-        :param min_frequency: Min frequency for a word to be in text for adding it to source vocabulary.
         :return: Train and test BucketIterator or None if file is not found.
         """
         data = self._get_data_pd(csv_path)
