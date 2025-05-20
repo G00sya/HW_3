@@ -31,10 +31,10 @@ class Data:
 
         self.word_field = Field(
             tokenize="moses",
-            init_token=Tokens.BOS,
-            eos_token=Tokens.EOS,
-            pad_token=Tokens.PAD,
-            unk_token=Tokens.UNK,
+            init_token=Tokens.BOS.value,
+            eos_token=Tokens.EOS.value,
+            pad_token=Tokens.PAD.value,
+            unk_token=Tokens.UNK.value,
             use_vocab=True,
         )
         self.__fields = [("source", self.word_field), ("target", self.word_field)]
