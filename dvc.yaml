@@ -4,7 +4,7 @@ stages:
     deps:
     - Makefile
     outs:
-    - data/raw/news.csv
+    - data/news.csv
   install_pretrained_embeddings:
     cmd: make install_pretrained_embeddings
     deps:
@@ -14,7 +14,7 @@ stages:
   train:
     cmd: make train
     deps:
-    - data/raw/news.csv
+    - data/news.csv
     - embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar
     - src/train.py
     outs:

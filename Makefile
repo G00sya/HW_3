@@ -18,9 +18,9 @@ install_pretrained_embeddings:
 
 install_dataset:
 	mkdir -p data/raw
-	curl -L -o data/raw/news.zip "https://drive.google.com/uc?export=download&id=1hIVVpBqM6VU4n3ERkKq4tFaH4sKN0Hab"
-	unzip data/raw/news.zip -d data/raw
-	rm data/raw/news.zip
+	curl -L -o data/news.zip "https://drive.google.com/uc?export=download&id=1hIVVpBqM6VU4n3ERkKq4tFaH4sKN0Hab"
+	unzip data/news.zip -d data/raw
+	rm data/news.zip
 
 train:
     python src/train.py

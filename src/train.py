@@ -146,7 +146,7 @@ if __name__ == "__main__":
     # Initialize data objects
     data = Data(navec)
     train_iter, test_iter = data.init_dataset(
-        csv_path=os.path.join(".", "data", "raw", "news.csv"),
+        csv_path=os.path.join(".", "data", "news.csv"),
         batch_sizes=(config["train_batch_size"], config["test_batch_size"]),
         split_ratio=config["data_split_ratio"],
     )
