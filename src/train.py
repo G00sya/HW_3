@@ -70,7 +70,7 @@ def do_epoch(
 
                 loss = criterion(logits, target)
                 epoch_loss += loss.item()
-                if optimizer:
+                if is_train:
                     optimizer.zero_grad()
                     loss.backward()
                     scheduler.step()
@@ -81,6 +81,12 @@ def do_epoch(
                         wandb.log(
                             metrics,
                             step=epoch_number * len(data_iter) + (i + 1) * config["train_batch_size"],
+                        )
+                else:
+                    if i % 100 == 0 and use_wandb:
+                        wandb.log(
+                            {"test_loss": loss},
+                            step=epoch_number * len(data_iter) + (i + 1) * config["test_batch_size"],
                         )
 
                 progress_bar.update()
