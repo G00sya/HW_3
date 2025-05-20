@@ -66,7 +66,7 @@ def test_validation_mode(setup):
     model.forward.return_value = torch.randn(2 * 11, 100)
     criterion.return_value = torch.tensor(2.34)
 
-    loss = do_epoch(model, criterion, data_iter, epoch_number, None, scheduler, "Val")
+    loss = do_epoch(model, criterion, data_iter, epoch_number, None, scheduler, "Val", False)
 
     model.train.assert_called_once_with(False)
     assert isinstance(loss, float)
@@ -77,7 +77,7 @@ def test_batch_processing(setup):
     model.forward.return_value = torch.randn(2 * 11, 100)
     criterion.return_value = torch.tensor(1.0)
 
-    do_epoch(model, criterion, data_iter, epoch_number, None, scheduler, None)
+    do_epoch(model, criterion, data_iter, epoch_number, None, scheduler, None, False)
 
     assert model.forward.call_count == 2
 
@@ -89,4 +89,4 @@ def test_empty_iterator():
     epoch_number = 1
 
     with pytest.raises(ZeroDivisionError):
-        do_epoch(model, criterion, empty_iter, epoch_number, None)
+        do_epoch(model, criterion, empty_iter, epoch_number, None, None, None)
