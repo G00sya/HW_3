@@ -12,7 +12,7 @@ stages:
     outs:
       - embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar
   train:
-    cmd: python src/train.py
+    cmd: make train
     deps:
     - data/raw/news.csv
     - embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar
