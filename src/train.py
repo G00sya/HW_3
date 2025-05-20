@@ -78,15 +78,10 @@ def do_epoch(
 
                     if i % 100 == 0 and use_wandb:
                         metrics = estimate_current_state(loss, scheduler.rate())
+                        step = epoch_number * len(data_iter) + i
                         wandb.log(
                             metrics,
-                            step=epoch_number * len(data_iter) + (i + 1) * config["train_batch_size"],
-                        )
-                else:
-                    if i % 100 == 0 and use_wandb:
-                        wandb.log(
-                            {"test_loss": loss},
-                            step=epoch_number * len(data_iter) + (i + 1) * config["test_batch_size"],
+                            step=step,
                         )
 
                 progress_bar.update()
