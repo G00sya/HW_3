@@ -37,3 +37,4 @@ cover/
 *.csv
 /embeddings
 /wandb/
+/src/wandb
