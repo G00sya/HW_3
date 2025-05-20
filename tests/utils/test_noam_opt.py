@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 import torch.optim as optim
 from torch import nn
@@ -8,7 +10,8 @@ from src.utils.noam_opt import NoamOpt
 class TestNoamOpt:
     def test_initialization(self):
         """Test that NoamOpt initializes correctly."""
-        scheduler = NoamOpt(model_size=512, warmup=4000, factor=2)
+        optimizer = MagicMock(spec=optim.Adam)
+        scheduler = NoamOpt(model_size=512, optimizer=optimizer, warmup=4000, factor=2)
         assert scheduler._NoamOpt__step == 0
         assert scheduler.warmup == 4000
         assert scheduler.factor == 2
@@ -35,7 +38,8 @@ class TestNoamOpt:
 
     def test_rate_calculation(self):
         """Test the learning rate calculation at different steps."""
-        scheduler = NoamOpt(model_size=512, warmup=4000, factor=2)
+        optimizer = MagicMock(spec=optim.Adam)
+        scheduler = NoamOpt(model_size=512, optimizer=optimizer, warmup=4000, factor=2)
 
         # During warmup (step < warmup)
         warmup_rate = scheduler.rate(step=1000)
@@ -64,15 +68,6 @@ class TestNoamOpt:
         scheduler.step()
         assert scheduler._NoamOpt__step == 2
         assert sample_optimizer.param_groups[0]["lr"] == scheduler.rate(2)
-
-    def test_late_optimizer_assignment(self, sample_optimizer):
-        """Test that optimizer can be assigned after initialization."""
-        scheduler = NoamOpt(model_size=512)
-        assert scheduler.optimizer is None
-
-        scheduler.optimizer = sample_optimizer
-        scheduler.step()
-        assert sample_optimizer.param_groups[0]["lr"] > 0
 
     def test_multiple_param_groups(self, simple_model_for_noam_opt):
         """Test behavior with multiple parameter groups."""

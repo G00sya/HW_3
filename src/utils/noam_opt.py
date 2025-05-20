@@ -1,7 +1,7 @@
 import torch.optim as optim
 
 
-class NoamOpt(object):
+class NoamOpt:
     """
     Noam learning rate scheduler.
     Implements the learning rate schedule from the paper: "Attention Is All You Need" (Vaswani et al., 2017).
@@ -11,16 +11,14 @@ class NoamOpt(object):
     square root of the step number.
     """
 
-    def __init__(
-        self, model_size: int, factor: float = 2, warmup: int = 4000, optimizer: optim.Optimizer | None = None
-    ):
+    def __init__(self, model_size: int, optimizer: optim.Optimizer, factor: float = 2, warmup: int = 4000):
         """
         Initialize the Noam learning rate scheduler.
 
         :param model_size: The dimensionality of the model's embeddings (d_model).
+        :param optimizer: The optimizer to apply scheduling to.
         :param factor: Scaling factor for the learning rate.
         :param warmup: Number of warmup steps where LR increases.
-        :param optimizer: The optimizer to apply scheduling to.
         """
         if not isinstance(model_size, int):
             raise TypeError(f"model_size must be an integer, but got {type(model_size)}.")
@@ -34,7 +32,7 @@ class NoamOpt(object):
             raise TypeError(f"warmup must be an integer, but got {type(warmup)}.")
         if warmup <= 0:
             raise ValueError(f"warmup must be a positive integer, but got {warmup}.")
-        if not isinstance(optimizer, optim.Optimizer) and optimizer is not None:
+        if not isinstance(optimizer, optim.Optimizer):
             raise TypeError(f"optimizer must be torch.optim.Optimizer object, but got {type(optimizer)}.")
 
         self.optimizer = optimizer
@@ -42,7 +40,6 @@ class NoamOpt(object):
         self.warmup = warmup
         self.factor = factor
         self.model_size = model_size
-        self.__rate = 0  # Current learning rate
 
     def step(self) -> None:
         """
@@ -56,17 +53,12 @@ class NoamOpt(object):
         for param_group in self.optimizer.param_groups:
             param_group["lr"] = rate
 
-        self.__rate = rate  # Store current rate
-        self.optimizer.step()  # Step the optimizer
-
     def rate(self, step: int | None = None) -> float:
         """
         Compute the learning rate for a given step.
 
         :param step: If provided, compute rate for this step. Otherwise, uses internal counter.
-
         :return: The computed learning rate.
-
         Formula:
             rate = factor * d_model^(-0.5) * min(step^(-0.5), step * warmup^(-1.5))
         """
