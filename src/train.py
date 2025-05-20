@@ -49,9 +49,14 @@ def do_epoch(
         with tqdm(total=batches_count) as progress_bar:
             for i, batch in enumerate(data_iter):
                 source_inputs, target_inputs, source_mask, target_mask = convert_batch(batch)
+                # target_inputs[:, :-1] removes last element for its prediction
+                # logits has shape (batch_size, target_sequence_length-1, vocab_size)
+                # - it is distribution of words in vocabulary for each word in target sentence,
+                # needs for loss calculation
                 logits = model.forward(source_inputs, target_inputs[:, :-1], source_mask, target_mask[:, :-1, :-1])
-
+                # group all batches in one "sentence". Shape: (batch_size * (target_sequence_length-1), vocab_size)
                 logits = logits.contiguous().view(-1, logits.shape[-1])
+                # group all batches in one "sentence". Shape: (batch_size * (target_sequence_length-1))
                 target = target_inputs[:, 1:].contiguous().view(-1)
                 loss = criterion(logits, target)
 
