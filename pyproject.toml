@@ -15,6 +15,7 @@ pandas = "^2.2.3"
 gensim = "^4.3.3"
 navec = "^0.10.0"
 slovnet="^0.6.0"
+wandb="^0.19.11"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.1.0"
