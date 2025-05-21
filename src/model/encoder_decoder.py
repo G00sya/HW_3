@@ -1,9 +1,13 @@
+from pathlib import Path
+
 import torch
 import torch.nn as nn
 
+from src.data.prepare_data import Data, Tokens
 from src.model.decoder import Decoder
 from src.model.encoder import Encoder
 from src.model.generator import Generator
+from src.utils.device import setup_device
 from src.utils.shared_embedding import SharedEmbedding
 
 
@@ -89,3 +93,81 @@ class EncoderDecoder(nn.Module):
         decoder_output = self.decoder(target_inputs, encoder_output, source_mask, target_mask)
 
         return self.generator(decoder_output)
+
+    def predict(
+        self, source_text: str, data: Data, max_length: int = 100, device: torch.device = setup_device()
+    ) -> str:
+        """
+        Generate a prediction for the given source text using greedy decoding.
+
+        :param source_text: Input text string
+        :param data: Data object containing vocabulary and preprocessing
+        :param max_length: Maximum length of generated sequence
+        :param device: Device to run the computation on
+        :return: Generated sentence as a string
+        """
+        self.eval()
+
+        # Preprocess the input text
+        tokenized = data.word_field.preprocess(source_text)
+        numericalized = [
+            data.word_field.vocab.stoi.get(token, data.word_field.vocab.stoi[Tokens.UNK.value]) for token in tokenized
+        ]
+
+        # Convert to tensor and add batch dimension
+        source_inputs = torch.tensor(numericalized, device=device).unsqueeze(0)
+        source_mask = (source_inputs != data.word_field.vocab.stoi[Tokens.PAD.value]).unsqueeze(-2).to(device)
+
+        # Initialize target with BOS token
+        bos_idx = data.word_field.vocab.stoi[Tokens.BOS.value]
+        target_inputs = torch.tensor([[bos_idx]], device=device)
+
+        # Autoregressive decoding
+        for _ in range(max_length):
+            # Create target mask
+            target_mask = (target_inputs != data.word_field.vocab.stoi[Tokens.PAD.value]).unsqueeze(-2)
+            target_mask = target_mask & self.subsequent_mask(target_inputs.size(-1)).to(device)
+
+            # Forward pass
+            with torch.no_grad():
+                out = self.forward(source_inputs, target_inputs, source_mask, target_mask)
+
+            # Get next token
+            prob = out[:, -1, :]
+            next_token = torch.argmax(prob, dim=-1)
+
+            # Append to target sequence
+            target_inputs = torch.cat([target_inputs, next_token.unsqueeze(0)], dim=-1)
+
+            # Stop if EOS is generated
+            eos_idx = data.word_field.vocab.stoi[Tokens.EOS.value]
+            if next_token.item() == eos_idx:
+                break
+
+        # Convert token IDs to words
+        tokens = target_inputs.squeeze(0).tolist()
+        words = [data.word_field.vocab.itos[token] for token in tokens]
+
+        # Remove BOS and EOS tokens and join into sentence
+        sentence = " ".join(words[1:-1])  # Exclude BOS and EOS
+
+        return sentence
+
+    @staticmethod
+    def subsequent_mask(size: int) -> torch.Tensor:
+        """
+        Create a mask for subsequent positions to prevent attending to future tokens.
+
+        :param size: Size of the mask (sequence length)
+        :return: Mask tensor of shape (1, size, size)
+        """
+        attn_shape = (1, size, size)
+        subsequent_mask = torch.triu(torch.ones(attn_shape), diagonal=1).type(torch.uint8)
+        return subsequent_mask == 0
+
+    def save_model(self) -> None:
+        """
+        Save the model's state dictionary to a file.
+        """
+        path = Path(__file__).parent.parent.parent / "model" / "model.pt"
+        torch.save(self.state_dict(), path)
