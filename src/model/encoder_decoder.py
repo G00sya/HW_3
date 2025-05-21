@@ -106,52 +106,65 @@ class EncoderDecoder(nn.Module):
         :param device: Device to run the computation on
         :return: Generated sentence as a string
         """
+        if not source_text.strip():
+            raise ValueError("Input text cannot be empty")
+
+        if not hasattr(data, 'word_field') or not hasattr(data.word_field, 'vocab'):
+            raise RuntimeError("Data object must contain initialized word_field with vocabulary")
+
         self.eval()
+        device = device or next(self.parameters()).device
 
-        # Preprocess the input text
-        tokenized = data.word_field.preprocess(source_text)
-        numericalized = [
-            data.word_field.vocab.stoi.get(token, data.word_field.vocab.stoi[Tokens.UNK.value]) for token in tokenized
-        ]
+        try:
+            # Text preprocessing
+            tokenized = data.word_field.preprocess(source_text)
+            if not tokenized:
+                return ""
 
-        # Convert to tensor and add batch dimension
-        source_inputs = torch.tensor(numericalized, device=device).unsqueeze(0)
-        source_mask = (source_inputs != data.word_field.vocab.stoi[Tokens.PAD.value]).unsqueeze(-2).to(device)
+            # Numericalization with UNK handling
+            vocab = data.word_field.vocab
+            unk_idx = vocab.stoi[Tokens.UNK.value]
+            numericalized = [vocab.stoi.get(token, unk_idx) for token in tokenized]
 
-        # Initialize target with BOS token
-        bos_idx = data.word_field.vocab.stoi[Tokens.BOS.value]
-        target_inputs = torch.tensor([[bos_idx]], device=device)
+            # Tensor preparation
+            source_inputs = torch.tensor(numericalized, dtype=torch.long, device=device).unsqueeze(0)
+            pad_idx = vocab.stoi[Tokens.PAD.value]
+            source_mask = (source_inputs != pad_idx).unsqueeze(-2).to(device)
 
-        # Autoregressive decoding
-        for _ in range(max_length):
-            # Create target mask
-            target_mask = (target_inputs != data.word_field.vocab.stoi[Tokens.PAD.value]).unsqueeze(-2)
-            target_mask = target_mask & self.subsequent_mask(target_inputs.size(-1)).to(device)
+            # Generation setup
+            bos_idx = vocab.stoi[Tokens.BOS.value]
+            eos_idx = vocab.stoi[Tokens.EOS.value]
+            target_inputs = torch.tensor([[bos_idx]], dtype=torch.long, device=device)
 
-            # Forward pass
-            with torch.no_grad():
-                out = self.forward(source_inputs, target_inputs, source_mask, target_mask)
+            # Autoregressive decoding
+            for _ in range(max_length):
+                # Create causal mask
+                target_mask = (target_inputs != pad_idx).unsqueeze(-2)
+                target_mask = target_mask & self.subsequent_mask(target_inputs.size(-1)).to(device)
 
-            # Get next token
-            prob = out[:, -1, :]
-            next_token = torch.argmax(prob, dim=-1)
+                # Forward pass
+                with torch.no_grad():
+                    logits = self.forward(source_inputs, target_inputs, source_mask, target_mask)
+                    next_token = logits[:, -1, :].argmax(-1)
 
-            # Append to target sequence
-            target_inputs = torch.cat([target_inputs, next_token.unsqueeze(0)], dim=-1)
+                # Append token and check for EOS
+                target_inputs = torch.cat([target_inputs, next_token.unsqueeze(0)], dim=-1)
+                if next_token.item() == eos_idx:
+                    break
 
-            # Stop if EOS is generated
-            eos_idx = data.word_field.vocab.stoi[Tokens.EOS.value]
-            if next_token.item() == eos_idx:
-                break
+            # Convert back to text
+            tokens = target_inputs.squeeze(0).tolist()
+            words = [vocab.itos[token] for token in tokens
+                     if token not in {bos_idx, eos_idx, pad_idx}]
 
-        # Convert token IDs to words
-        tokens = target_inputs.squeeze(0).tolist()
-        words = [data.word_field.vocab.itos[token] for token in tokens]
+            if all(word == Tokens.UNK.value for word in words):
+                first_word = tokenized[0] if tokenized else ""
+                return first_word if first_word in vocab.stoi else " ".join(tokenized[:3])
 
-        # Remove BOS and EOS tokens and join into sentence
-        sentence = " ".join(words[1:-1])  # Exclude BOS and EOS
+            return ' '.join(words)
 
-        return sentence
+        except Exception as e:
+            raise RuntimeError(f"Prediction failed: {str(e)}") from e
 
     @staticmethod
     def subsequent_mask(size: int) -> torch.Tensor:
