@@ -8,4 +8,5 @@ config = dict(
     test_batch_size=32,
     data_split_ratio=0.85,
     use_pretrained_embedding=True,
+    d_model=300,  # in case of don't using pretrained embedding
 )

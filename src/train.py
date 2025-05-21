@@ -14,7 +14,7 @@ from src.utils.device import setup_device
 from src.utils.label_smoothing_loss import LabelSmoothingLoss
 from src.utils.mask import convert_batch
 from src.utils.noam_opt import NoamOpt
-from src.utils.shared_embedding import create_pretrained_embedding
+from src.utils.shared_embedding import SharedEmbedding, create_pretrained_embedding
 from src.utils.wandb_logic import estimate_current_state
 
 tqdm.get_lock().locks = []
@@ -141,19 +141,37 @@ def fit(
 
 if __name__ == "__main__":
     DEVICE = setup_device()
-    # Initialize SharedEmbedding with glove embedding (500.000 words, embedding=300)
-    shared_embedding, navec = create_pretrained_embedding(path="./embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar")
+    if config["use_pretrained_embedding"]:
+        # Initialize SharedEmbedding with navec embedding (500.000 words, embedding=300)
+        shared_embedding, embedding_model, pad_idx = create_pretrained_embedding(
+            path="../embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar"
+        )
+        vocab_size = len(embedding_model.index_to_key)
+        d_model = int(embedding_model.vector_size)
 
-    # Initialize data objects
-    data = Data(navec)
-    train_iter, test_iter = data.init_dataset(
-        csv_path=os.path.join(".", "data", "news.csv"),
-        batch_sizes=(config["train_batch_size"], config["test_batch_size"]),
-        split_ratio=config["data_split_ratio"],
-    )
+        # Initialize data objects
+        data = Data(embedding_model)
+        train_iter, test_iter = data.init_dataset(
+            csv_path=os.path.join("..", "data", "news.csv"),
+            batch_sizes=(config["train_batch_size"], config["test_batch_size"]),
+            split_ratio=config["data_split_ratio"],
+        )
+    else:
+        # Initialize data objects
+        data = Data()
+        train_iter, test_iter = data.init_dataset(
+            csv_path=os.path.join("..", "data", "news.csv"),
+            batch_sizes=(config["train_batch_size"], config["test_batch_size"]),
+            split_ratio=config["data_split_ratio"],
+        )
+
+        # Initialize SharedEmbedding
+        vocab_size = len(data.word_field.vocab)
+        d_model = config["d_model"]
+        pad_idx = 0
+        shared_embedding = SharedEmbedding(vocab_size, d_model, pad_idx)
 
     # Initialize model
-    vocab_size, d_model = map(int, navec.pq.shape)
     model = EncoderDecoder(
         target_vocab_size=vocab_size,
         shared_embedding=shared_embedding,
@@ -165,7 +183,6 @@ if __name__ == "__main__":
     ).to(DEVICE)
 
     # Initialize criterion
-    pad_idx = navec.vocab.pad_id
     criterion = LabelSmoothingLoss(pad_idx=pad_idx).to(DEVICE)
 
     # Initialize optimizer and scheduler for it
@@ -173,7 +190,7 @@ if __name__ == "__main__":
     scheduler = NoamOpt(model.d_model, optimizer)
 
     # Initialize wandb session
-    wandb.init(config=config, project="ML Homework-3")
+    wandb.init(config=config, project="ML Homework-3", name="pretrained embedding")
     wandb.watch(model)
 
     # Train process

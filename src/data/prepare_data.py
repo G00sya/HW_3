@@ -24,10 +24,13 @@ class Data:
     Class which initializes datasets for train and test data. Can download csv file if it is needed.
     """
 
-    def __init__(self, navec):
+    def __init__(self, embedding_model: KeyedVectors | None = None):
+        if embedding_model is not None:
+            if not isinstance(embedding_model, KeyedVectors):
+                raise TypeError(f"embedding_model must be a KeyedVectors or None, but got {type(embedding_model)}")
+
         self.__logger = setup_logger("prepare_data")
         self.__device = setup_device()
-        self.__navec = self._build_keyed_vectors(navec)
 
         self.word_field = Field(
             tokenize="moses",
@@ -37,30 +40,37 @@ class Data:
             unk_token=Tokens.UNK.value,
             use_vocab=True,
         )
+        self.__embedding_model = embedding_model
+
         self.__fields = [("source", self.word_field), ("target", self.word_field)]
 
-    def _build_keyed_vectors(self, navec) -> KeyedVectors:
+    def _build_vocab_from_gensim(self, embedding_model):
         """
-        Builds a KeyedVectors object with pre-computed weights from Navec model.
-        :return: KeyedVectors model.
+        Builds a torchtext Vocab object from a Gensim Word2Vec or FastText model.
+        :param embedding_model: Pretrained embedding model.
+        :returns: None.
         """
-        vector_size = navec.pq.dim  # Assuming self.pq.dim is the embedding dimension
+        # Get word counts from model's vocabulary
+        word_counts = Counter(embedding_model.key_to_index)
 
-        # Get word list and weights
-        word_list = navec.vocab.words
-        weights = navec.pq.unpack()  # Assuming self.pq.unpack() returns a NumPy array of weights
+        # Create the Vocab object
+        specials = [Tokens.BOS.value, Tokens.EOS.value, Tokens.UNK.value, Tokens.PAD.value]
+        vocab = Vocab(word_counts, specials=specials)
 
-        # Create a dictionary mapping words to their vectors
-        word_vectors = {}
-        for word, vector in zip(word_list, weights):
-            word_vectors[word] = vector
+        # Create an embedding matrix
+        embedding_dim = embedding_model.vector_size
+        vocab_size = len(vocab)
+        embedding_matrix = torch.zeros((vocab_size, embedding_dim))
 
-        # Create KeyedVectors object
-        model = KeyedVectors(vector_size)
+        # Populate the embedding matrix with pre-trained vectors
+        for i, word in enumerate(vocab.itos):  # itos for index to string
+            if word in embedding_model:
+                embedding_matrix[i] = torch.tensor(embedding_model[word])
+            else:
+                embedding_matrix[i] = torch.randn(embedding_dim)
 
-        # Load the precomputed vectors into the KeyedVectors object.
-        model.add_vectors(list(word_vectors.keys()), list(word_vectors.values()))  # load the weights
-        return model
+        self.word_field.vocab = vocab
+        self.word_field.embedding_matrix = embedding_matrix
 
     def _get_data_pd(self, csv_path: str) -> pd.DataFrame | None:
         """
@@ -113,9 +123,15 @@ class Data:
             return None
         train_dataset, test_dataset = self._create_datasets(data, split_ratio)
 
-        vocab, vectors = self._build_vocab_from_gensim()
-        self.word_field.vocab = vocab
-        self.word_field.embedding_matrix = vectors
+        # Build vocabulary
+        if self.__embedding_model is None:
+            self.word_field.build_vocab(
+                train_dataset,
+                min_freq=2,
+            )
+        else:
+            self._build_vocab_from_gensim(self.__embedding_model)
+
         self.__logger.info(f"Vocab size = {len(self.word_field.vocab)}")
 
         train_iter, test_iter = BucketIterator.splits(
@@ -127,31 +143,3 @@ class Data:
         )
 
         return train_iter, test_iter
-
-    def _build_vocab_from_gensim(self) -> (Vocab, torch.Tensor):
-        """
-        Builds a torchtext Vocab object from a Gensim Word2Vec or FastText model.
-
-        :returns: A torchtext Vocab object. Also returns the embedding matrix as a Torch tensor.
-        """
-        # Get word counts from model's vocabulary
-        word_counts = Counter(self.__navec.key_to_index)
-
-        # Create the Vocab object
-        specials = [Tokens.BOS.value, Tokens.EOS.value, Tokens.UNK.value, Tokens.PAD.value]
-        vocab = Vocab(word_counts, specials=specials)
-
-        # Create an embedding matrix
-        embedding_dim = self.__navec.vector_size
-        vocab_size = len(vocab)
-        embedding_matrix = torch.zeros((vocab_size, embedding_dim))
-
-        # Populate the embedding matrix with pre-trained vectors
-        for i, word in enumerate(vocab.itos):  # itos for index to string
-            if word in self.__navec:
-                embedding_matrix[i] = torch.tensor(self.__navec[word])
-            else:
-                # Handle <BOS>, <EOS> with random initialization
-                embedding_matrix[i] = torch.randn(embedding_dim)
-
-        return vocab, embedding_matrix
