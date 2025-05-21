@@ -1,46 +1,99 @@
+from pathlib import Path
+from typing import Optional
+
 import torch
-from src.model.encoder_decoder import EncoderDecoder
+
 from src.data.prepare_data import Data
-from src.utils.shared_embedding import create_pretrained_embedding
+from src.model.encoder_decoder import EncoderDecoder
 from src.utils.device import setup_device
+from src.utils.shared_embedding import create_pretrained_embedding
 
 
-def load_model_for_prediction(model_path: str):
-    """Load everything needed for prediction"""
-    # 1. Load the saved checkpoint
-    checkpoint = torch.load(model_path, map_location='cpu')
+def load_model_and_data(
+    model_path: str,
+    embedding_path: Optional[str] = None,
+    data_path: Optional[str] = None,
+    device: torch.device = torch.device("cpu"),
+) -> tuple[EncoderDecoder, Data]:
+    """Load trained model with all required components"""
+    # 1. Validate paths
+    embedding_path = embedding_path or str(
+        Path(__file__).parent.parent.parent / "embeddings" / "navec_hudlit_v1_12B_500K_300d_100q.tar"
+    )
+    data_path = data_path or str(Path(__file__).parent.parent.parent / "data" / "raw" / "news.csv")
 
-    # 2. Recreate embedding and data processor
-    shared_embedding, navec = create_pretrained_embedding(path="../embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar")
-    data = Data(navec)
-    data.word_field.vocab = checkpoint['vocab']  # Restore vocabulary
+    if not Path(model_path).exists():
+        raise FileNotFoundError(f"Model file not found at {model_path}")
+    if not Path(embedding_path).exists():
+        raise FileNotFoundError(f"Embedding file not found at {embedding_path}")
+    if not Path(data_path).exists():
+        raise FileNotFoundError(f"Data file not found at {data_path}")
+
+    # 2. Load embeddings and data processor
+    try:
+        shared_embedding, navec, _ = create_pretrained_embedding(path=embedding_path)
+        data = Data(navec)
+        data.init_dataset(data_path)  # Initialize vocabulary
+    except Exception as e:
+        raise RuntimeError(f"Failed to initialize embeddings/data: {str(e)}")
 
     # 3. Recreate model architecture
-    model = EncoderDecoder(
-        target_vocab_size=checkpoint['model_config']['target_vocab_size'],
-        shared_embedding=shared_embedding,
-        d_model=checkpoint['model_config']['d_model'],
-        heads_count=checkpoint['model_config']['heads_count']
-    )
+    try:
+        vocab_size = len(navec.index_to_key)
+        d_model = int(navec.vector_size)
+        model = EncoderDecoder(
+            target_vocab_size=vocab_size, shared_embedding=shared_embedding, d_model=d_model, heads_count=10
+        ).to(device)
 
-    # 4. Load trained weights
-    model.load_state_dict(checkpoint['model_state_dict'])
-    model.eval()
+        # Load weights
+        model.load_state_dict(torch.load(model_path, map_location=device))
+        model.eval()
+    except Exception as e:
+        raise RuntimeError(f"Model loading failed: {str(e)}")
 
     return model, data
 
 
-# Usage
-DEVICE = setup_device()
-model, data = load_model_for_prediction("/home/nur/Documents/HW_3/model/model-1_epoch.pt")
-model.to(DEVICE)
+def interactive_predict(model: EncoderDecoder, data: Data, device: torch.device):
+    """Run interactive prediction session"""
+    print("\nEnter text to summarize (or 'quit' to exit):")
+    while True:
+        try:
+            text = input("> ").strip()
+            if text.lower() == "quit":
+                break
+            if not text:
+                print("Error: Empty input")
+                continue
 
-# Sample prediction
-sample_text = "Пластик произвел революцию в секторе пищевой упаковки, продлив срок хранения свежих продуктов. Однако команда испанских и немецких ученых выяснила, что некоторые виды упаковки — чайные пакетики — выделяют миллионы пластиковых частиц во время использования. Чайные пакетики обычно состоят из полимолочной кислоты. Однако они могут содержать и другие виды полимеров, поэтому для анализа ученые использовали материалы различного химического состава. Два вида пакетиков для чая — нейлоновые и полипропиленовые — приобретались онлайн. Третий исследуемый тип — зеленый чай местного бренда в упаковке из целлюлозы. В результате наблюдения обнаружилось, что заваривание этих чайных пакетиков в горячей воде привело к высвобождению большого количества пластиковых наночастиц и нитевидных структур. Пакетик из полипропилена выделил около 1,2 млрд частиц на 1 мл, средний размер фрагментов составил 136,7 нанометра. Пакетик из целлюлозы выделил около 135 млн частиц на 1 мл, средний размер фрагментов составил 244 нанометра. Пакетик из нейлона выделил около 8,18 млн частиц на 1 мл, средний размер фрагментов составил 138,4 нанометра. «С помощью передовых методов нам удалось определить эти загрязнители, что важно для продвижения исследований их возможного воздействия на здоровье человека», — объяснила одна из авторов работы Альба Гарсия-Родригез из Автономного университета Барселоны. Ученые также окрасили полученные частицы, чтобы посмотреть, что происходит с нанопластиком при взаимодействии с клетками кишечника человека. Эксперименты привели к выводу, что клетки, генерирующие слизь для защиты желудочно-кишечного тракта, наиболее активно поглощали пластиковые частицы. «Крайне важно разработать стандартизированные методы испытаний, которые позволят исследовать загрязнение пластиковыми материалами, контактирующими с пищевыми продуктами. Также необходимо сформулировать нормативную политику для эффективной минимизации отходов. Поскольку использование пластика в пищевой упаковке продолжает расти, нужно решить проблему загрязнения микро- и нанопластиком, обеспечить безопасность пищевых продуктов и защитить здоровье населения», — подытожили исследователи."  # Your news text here
-prediction = model.predict(
-    source_text=sample_text,
-    data=data,
-    max_length=50,
-    device=DEVICE
-)
-print("Generated summary:", prediction)
+            prediction = model.predict(source_text=text, data=data, max_length=100, device=device)
+            print("\nGenerated summary:", prediction, "\n")
+
+        except KeyboardInterrupt:
+            print("\nExiting...")
+            break
+        except Exception as e:
+            print(f"Prediction error: {str(e)}")
+
+
+if __name__ == "__main__":
+    try:
+        DEVICE = setup_device()
+        MODEL_PATH = "/home/nur/Documents/HW_3/model/model-1_epoch.pt"
+
+        print("Loading model and data...")
+        model, data = load_model_and_data(model_path=MODEL_PATH, device=DEVICE)
+        print("Model loaded successfully!")
+
+        # After data initialization
+        # sample_tokens = ["Пластик", "ученые", "частицы"]  # Words from your input
+        # print("\nVocabulary check:")
+        # for token in sample_tokens:
+        #     idx = data.word_field.vocab.stoi.get(token, -1)
+        #     print(f"'{token}': {'Exists' if idx != -1 else 'UNK'} (idx={idx})")
+
+        interactive_predict(model, data, DEVICE)
+
+    except Exception as e:
+        print(f"Fatal error: {str(e)}")
+        exit(1)

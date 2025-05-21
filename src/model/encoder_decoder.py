@@ -109,7 +109,7 @@ class EncoderDecoder(nn.Module):
         if not source_text.strip():
             raise ValueError("Input text cannot be empty")
 
-        if not hasattr(data, 'word_field') or not hasattr(data.word_field, 'vocab'):
+        if not hasattr(data, "word_field") or not hasattr(data.word_field, "vocab"):
             raise RuntimeError("Data object must contain initialized word_field with vocabulary")
 
         self.eval()
@@ -154,14 +154,13 @@ class EncoderDecoder(nn.Module):
 
             # Convert back to text
             tokens = target_inputs.squeeze(0).tolist()
-            words = [vocab.itos[token] for token in tokens
-                     if token not in {bos_idx, eos_idx, pad_idx}]
+            words = [vocab.itos[token] for token in tokens if token not in {bos_idx, eos_idx, pad_idx}]
 
             if all(word == Tokens.UNK.value for word in words):
                 first_word = tokenized[0] if tokenized else ""
                 return first_word if first_word in vocab.stoi else " ".join(tokenized[:3])
 
-            return ' '.join(words)
+            return " ".join(words)
 
         except Exception as e:
             raise RuntimeError(f"Prediction failed: {str(e)}") from e
