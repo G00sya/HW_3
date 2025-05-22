@@ -2,8 +2,8 @@ from collections import Counter
 from enum import Enum
 
 import pandas as pd
-import torch
 from gensim.models import KeyedVectors
+from sacremoses import MosesTokenizer
 from torchtext.data import BucketIterator, Dataset, Example, Field
 from torchtext.vocab import Vocab
 from tqdm.auto import tqdm
@@ -33,7 +33,7 @@ class Data:
         self.__device = setup_device()
 
         self.word_field = Field(
-            tokenize="moses",
+            tokenize=lambda x: self._safe_moses_tokenize(x),
             init_token=Tokens.BOS.value,
             eos_token=Tokens.EOS.value,
             pad_token=Tokens.PAD.value,
@@ -41,36 +41,30 @@ class Data:
             use_vocab=True,
         )
         self.__embedding_model = embedding_model
+        self.__mt = MosesTokenizer(lang="ru")
 
         self.__fields = [("source", self.word_field), ("target", self.word_field)]
 
-    def _build_vocab_from_gensim(self, embedding_model):
+    def _safe_moses_tokenize(self, text: str) -> list[str]:
+        """
+        Tokenize with Moses and convert OOV words to UNK.
+        """
+        tokens = self.__mt.tokenize(text.lower(), escape=False)
+        return [t if t in self.__embedding_model else Tokens.UNK.value for t in tokens]
+
+    def _build_vocab_from_gensim(self):
         """
         Builds a torchtext Vocab object from a Gensim Word2Vec or FastText model.
-        :param embedding_model: Pretrained embedding model.
         :returns: None.
         """
-        # Get word counts from model's vocabulary
-        word_counts = Counter(embedding_model.key_to_index)
+        all_tokens = sorted(self.__embedding_model.key_to_index.items(), key=lambda x: x[1])
+        tokens, original_indexes = zip(*all_tokens)
+        dummy_counter = Counter({token: 1 for token in tokens})
 
-        # Create the Vocab object
-        specials = [Tokens.BOS.value, Tokens.EOS.value, Tokens.UNK.value, Tokens.PAD.value]
-        vocab = Vocab(word_counts, specials=specials)
-
-        # Create an embedding matrix
-        embedding_dim = embedding_model.vector_size
-        vocab_size = len(vocab)
-        embedding_matrix = torch.zeros((vocab_size, embedding_dim))
-
-        # Populate the embedding matrix with pre-trained vectors
-        for i, word in enumerate(vocab.itos):  # itos for index to string
-            if word in embedding_model:
-                embedding_matrix[i] = torch.tensor(embedding_model[word])
-            else:
-                embedding_matrix[i] = torch.randn(embedding_dim)
-
-        self.word_field.vocab = vocab
-        self.word_field.embedding_matrix = embedding_matrix
+        self.word_field.vocab = Vocab(dummy_counter, specials=[], specials_first=False)
+        self.word_field.vocab.itos = list(tokens)
+        self.word_field.vocab.stoi = {token: idx for idx, token in enumerate(tokens)}
+        self.word_field.vocab.unk_index = self.__embedding_model.key_to_index[Tokens.UNK.value]
 
     def _get_data_pd(self, csv_path: str) -> pd.DataFrame | None:
         """
@@ -130,7 +124,7 @@ class Data:
                 min_freq=2,
             )
         else:
-            self._build_vocab_from_gensim(self.__embedding_model)
+            self._build_vocab_from_gensim()
 
         self.__logger.info(f"Vocab size = {len(self.word_field.vocab)}")
 
