@@ -1,5 +1,5 @@
 import math
-import os
+from pathlib import Path
 
 import torch
 import torch.optim as optim
@@ -168,27 +168,29 @@ def fit(
 
 
 if __name__ == "__main__":
+    PROJECT_ROOT = Path(__file__).parent.parent
     DEVICE = setup_device()
     if config["use_pretrained_embedding"]:
         # Initialize SharedEmbedding with navec embedding (500.000 words, embedding=300)
-        shared_embedding, embedding_model, pad_idx, unk_idx = create_pretrained_embedding(
-            path="./embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar"
-        )
+        embedding_path = PROJECT_ROOT / "embeddings" / "navec_hudlit_v1_12B_500K_300d_100q.tar"
+        shared_embedding, embedding_model, pad_idx, unk_idx = create_pretrained_embedding(path=str(embedding_path))
         vocab_size = len(embedding_model.index_to_key)
         d_model = int(embedding_model.vector_size)
 
         # Initialize data objects
         data = Data(embedding_model)
+        data_path = PROJECT_ROOT / "data" / "news.csv"
         train_iter, test_iter = data.init_dataset(
-            csv_path=os.path.join(".", "data", "news.csv"),
+            csv_path=str(data_path),
             batch_sizes=(config["train_batch_size"], config["test_batch_size"]),
             split_ratio=config["data_split_ratio"],
         )
     else:
         # Initialize data objects
         data = Data()
+        data_path = PROJECT_ROOT / "data" / "news.csv"
         train_iter, test_iter = data.init_dataset(
-            csv_path=os.path.join(".", "data", "news.csv"),
+            csv_path=str(data_path),
             batch_sizes=(config["train_batch_size"], config["test_batch_size"]),
             split_ratio=config["data_split_ratio"],
         )
