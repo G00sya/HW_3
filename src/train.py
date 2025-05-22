@@ -221,7 +221,9 @@ if __name__ == "__main__":
     scheduler = NoamOpt(model.d_model, optimizer)
 
     # Initialize wandb session
-    wandb.init(config=config, project="ML Homework-3", name="pretrained embedding-15 epochs without UNK")
+    wandb.init(
+        config=config, project="ML Homework-3", name=f"pretrained embedding-{config["epochs"]} epochs without UNK"
+    )
     wandb.watch(model)
 
     # Train process
