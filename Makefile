@@ -13,8 +13,8 @@ hooks:
 	poetry run pre-commit install --install-hooks
 
 install_pretrained_embeddings:
-	mkdir -p ./embeddings
-	wget -P ./embeddings https://storage.yandexcloud.net/natasha-navec/packs/navec_hudlit_v1_12B_500K_300d_100q.tar
+    mkdir -p ./embeddings && \
+    wget -P ./embeddings https://storage.yandexcloud.net/natasha-navec/packs/navec_hudlit_v1_12B_500K_300d_100q.tar
 
 install_dataset:
 	mkdir -p data/raw
