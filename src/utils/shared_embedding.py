@@ -105,23 +105,24 @@ class SharedEmbedding(nn.Module):
         return self.__embedding(x)
 
 
-def create_pretrained_embedding(path: str) -> (SharedEmbedding, KeyedVectors, int):
+def create_pretrained_embedding(path: str) -> (SharedEmbedding, KeyedVectors, int, int):
     """
     Create shared embedding instance with pretrained embedding which is red using path.
 
     :param path: Full path to pretrained embedding file.
-    :return: Instance of SharedEmbedding and pretrained_embedding.
+    :return: Instance of SharedEmbedding and pretrained_embedding. pad_id and unk_id.
     """
     navec = Navec.load(path)
     vocab_size, d_model = map(int, navec.pq.shape)
     pad_idx = navec.vocab.pad_id
+    unk_idx = navec.vocab.unk_id
     pretrained_embedding = _build_keyed_vectors(navec)
 
     shared_embedding = SharedEmbedding(
         vocab_size=vocab_size, d_model=d_model, padding_idx=pad_idx, pretrained_embedding=pretrained_embedding
     )
 
-    return shared_embedding, pretrained_embedding, pad_idx
+    return shared_embedding, pretrained_embedding, pad_idx, unk_idx
 
 
 def _build_keyed_vectors(navec) -> KeyedVectors:

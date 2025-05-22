@@ -7,7 +7,7 @@ from torchtext.data import BucketIterator
 from tqdm.auto import tqdm
 
 import wandb
-from src.data.prepare_data import Data
+from src.data.prepare_data import Data, Tokens
 from src.model.encoder_decoder import EncoderDecoder
 from src.model.hparams import config
 from src.utils.device import setup_device
@@ -25,6 +25,8 @@ def do_epoch(
     criterion: torch.nn.Module,
     data_iter: BucketIterator,
     epoch_number: int,
+    pad_idx: int,
+    unk_idx: int,
     optimizer: torch.optim.Optimizer | None = None,
     scheduler: NoamOpt | None = None,
     name: str | None = None,
@@ -37,10 +39,12 @@ def do_epoch(
     :param criterion: Loss function (e.g., CrossEntropyLoss).
     :param data_iter: Iterator yielding batches of (source, target) pairs.
     :param epoch_number: Number of current epoch for wandb logging.
+    :param pad_idx: Index of padding in vocabulary.
+    :param unk_idx: Index of unknown words in vocabulary.
     :param optimizer: Optimizer for parameter updates. None for validation.
     :param scheduler: Scheduler for learning rate managing. None for validation.
     :param name: Prefix for progress bar descriptions (e.g., "Train").
-
+    :param use_wandb: If True it logs info in wandb.
     :return: Average loss across all batches in the epoch.
     """
     epoch_loss = 0
@@ -54,7 +58,7 @@ def do_epoch(
     with torch.autograd.set_grad_enabled(is_train):
         with tqdm(total=batches_count) as progress_bar:
             for i, batch in enumerate(data_iter):
-                source_inputs, target_inputs, source_mask, target_mask = convert_batch(batch)
+                source_inputs, target_inputs, source_mask, target_mask = convert_batch(batch, pad_idx, unk_idx)
 
                 # target_inputs[:, :-1] removes last element for its prediction
                 # logits has shape (batch_size, target_sequence_length-1, vocab_size)
@@ -105,6 +109,8 @@ def fit(
     optimizer: torch.optim.Optimizer,
     scheduler: NoamOpt,
     train_iter: BucketIterator,
+    pad_idx: int,
+    unk_idx: int,
     epochs_count: int = 1,
     val_iter: BucketIterator | None = None,
 ) -> tuple[list[float], float]:
@@ -117,6 +123,8 @@ def fit(
     :param scheduler: Scheduler for learning rate managing.
     :param train_iter: Training data BucketIterator yielding batches of tensors
            (source, target, source_mask, target_mask).
+    :param pad_idx: Index of padding in vocabulary.
+    :param unk_idx: Index of unknown words in vocabulary.
     :param epochs_count: Number of complete passes through the training data. Default: 1.
     :param val_iter: Optional validation data iterator with same format as train_iter. Default: None.
     :return: Tuple containing (training_losses, best_validation_loss).
@@ -128,11 +136,31 @@ def fit(
 
     for epoch in range(epochs_count):
         name_prefix = f"[{epoch + 1} / {epochs_count}] "
-        train_loss = do_epoch(model, criterion, train_iter, epoch, optimizer, scheduler, name_prefix + "Train:")
+        train_loss = do_epoch(
+            model=model,
+            criterion=criterion,
+            data_iter=train_iter,
+            epoch_number=epoch,
+            pad_idx=pad_idx,
+            unk_idx=unk_idx,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            name=name_prefix + "Train:",
+        )
         train_losses.append(train_loss)  # Store training loss
 
         if val_iter is not None:
-            val_loss = do_epoch(model, criterion, val_iter, epoch, None, None, name_prefix + "  Val:")
+            val_loss = do_epoch(
+                model=model,
+                criterion=criterion,
+                data_iter=val_iter,
+                epoch_number=epoch,
+                pad_idx=pad_idx,
+                unk_idx=unk_idx,
+                optimizer=None,
+                scheduler=None,
+                name=name_prefix + "  Val:",
+            )
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
 
@@ -143,8 +171,8 @@ if __name__ == "__main__":
     DEVICE = setup_device()
     if config["use_pretrained_embedding"]:
         # Initialize SharedEmbedding with navec embedding (500.000 words, embedding=300)
-        shared_embedding, embedding_model, pad_idx = create_pretrained_embedding(
-            path="../embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar"
+        shared_embedding, embedding_model, pad_idx, unk_idx = create_pretrained_embedding(
+            path="./embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar"
         )
         vocab_size = len(embedding_model.index_to_key)
         d_model = int(embedding_model.vector_size)
@@ -152,7 +180,7 @@ if __name__ == "__main__":
         # Initialize data objects
         data = Data(embedding_model)
         train_iter, test_iter = data.init_dataset(
-            csv_path=os.path.join("..", "data", "news.csv"),
+            csv_path=os.path.join(".", "data", "news.csv"),
             batch_sizes=(config["train_batch_size"], config["test_batch_size"]),
             split_ratio=config["data_split_ratio"],
         )
@@ -160,7 +188,7 @@ if __name__ == "__main__":
         # Initialize data objects
         data = Data()
         train_iter, test_iter = data.init_dataset(
-            csv_path=os.path.join("..", "data", "news.csv"),
+            csv_path=os.path.join(".", "data", "news.csv"),
             batch_sizes=(config["train_batch_size"], config["test_batch_size"]),
             split_ratio=config["data_split_ratio"],
         )
@@ -168,7 +196,8 @@ if __name__ == "__main__":
         # Initialize SharedEmbedding
         vocab_size = len(data.word_field.vocab)
         d_model = config["d_model"]
-        pad_idx = 0
+        pad_idx = data.word_field.vocab.stoi[Tokens.PAD.value]
+        unk_idx = data.word_field.vocab.stoi[Tokens.UNK.value]
         shared_embedding = SharedEmbedding(vocab_size, d_model, pad_idx)
 
     # Initialize model
@@ -190,9 +219,21 @@ if __name__ == "__main__":
     scheduler = NoamOpt(model.d_model, optimizer)
 
     # Initialize wandb session
-    wandb.init(config=config, project="ML Homework-3", name="pretrained embedding")
+    wandb.init(config=config, project="ML Homework-3", name="pretrained embedding-15 epochs without UNK")
     wandb.watch(model)
 
     # Train process
-    fit(model, criterion, optimizer, scheduler, train_iter, epochs_count=config["epochs"], val_iter=test_iter)
+    fit(
+        model=model,
+        criterion=criterion,
+        optimizer=optimizer,
+        scheduler=scheduler,
+        train_iter=train_iter,
+        pad_idx=pad_idx,
+        unk_idx=unk_idx,
+        epochs_count=config["epochs"],
+        val_iter=None,
+    )
     wandb.finish()
+
+    model.save_model("model-15_epochs-without_unk.pt")
