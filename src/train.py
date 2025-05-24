@@ -3,10 +3,10 @@ from pathlib import Path
 
 import torch
 import torch.optim as optim
+import wandb
 from torchtext.data import BucketIterator
 from tqdm.auto import tqdm
 
-import wandb
 from src.data.prepare_data import Data, Tokens
 from src.model.encoder_decoder import EncoderDecoder
 from src.model.hparams import config
@@ -222,7 +222,7 @@ if __name__ == "__main__":
 
     # Initialize wandb session
     wandb.init(
-        config=config, project="ML Homework-3", name=f"pretrained embedding-{config["epochs"]} epochs without UNK"
+        config=config, project="ML Homework-3", name=f"pretrained embedding-{config['epochs']} epochs without UNK"
     )
     wandb.watch(model)
 
