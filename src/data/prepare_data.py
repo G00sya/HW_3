@@ -1,3 +1,4 @@
+import re
 from collections import Counter
 from enum import Enum
 
@@ -49,6 +50,9 @@ class Data:
         """
         Tokenize with Moses and convert OOV words to UNK.
         """
+        # Remove punctuation using regular expressions
+        text = re.sub(r"[^\w\s]", "", text)  # Keep alphanumeric characters and spaces
+
         tokens = self.__mt.tokenize(text.lower(), escape=False)
         return [t if t in self.__embedding_model else Tokens.UNK.value for t in tokens]
 
