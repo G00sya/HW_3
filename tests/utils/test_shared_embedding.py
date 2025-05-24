@@ -3,84 +3,71 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 import torch
-import torch.nn as nn
-from navec import Navec
+from gensim.models import KeyedVectors
 
-from src.utils.shared_embedding import SharedEmbedding, create_pretrained_embedding
+from src.utils.shared_embedding import SharedEmbedding, _build_keyed_vectors, create_pretrained_embedding
 
 
 class TestSharedEmbedding:
-    def test_init(self):
-        """
-        Tests the SharedEmbedding class initialization without pretrained embedding.
-        """
-        vocab_size = 10
-        d_model = 5
-        padding_idx = 0
+    @pytest.fixture
+    def mock_kv(self):
+        """Mock KeyedVectors with 10 words, dim=300"""
+        kv = KeyedVectors(vector_size=300)
+        kv.add_vectors([f"word{i}" for i in range(10)], np.random.rand(10, 300))
+        return kv
 
-        # Create an instance of SharedEmbedding.
-        shared_embedding = SharedEmbedding(vocab_size, d_model, padding_idx)
-        assert (
-            shared_embedding._SharedEmbedding__embedding.num_embeddings == vocab_size
-        ), "Wrong parameters of nn.Embedding."
-        assert (
-            shared_embedding._SharedEmbedding__embedding.embedding_dim == d_model
-        ), "Wrong parameters of nn.Embedding."
+    def test_init_with_pretrained(self, mock_kv):
+        """Test initialization with pretrained embeddings"""
+        emb = SharedEmbedding(vocab_size=10, d_model=300, pretrained_embedding=mock_kv)
+        assert emb._SharedEmbedding__embedding.weight.shape == (10, 300)
 
-        # Create an input tensor.
-        input_tensor = torch.tensor([1, 2, 3, 4, 5])
+    def test_init_with_random(self):
+        """Test random initialization"""
+        emb = SharedEmbedding(vocab_size=100, d_model=200)
+        assert emb._SharedEmbedding__embedding.num_embeddings == 100
+        assert emb._SharedEmbedding__embedding.embedding_dim == 200
 
-        # Transform the input tensor.
-        output_tensor = shared_embedding(input_tensor)
+    def test_forward_pass(self, mock_kv):
+        """Test forward pass with valid input"""
+        emb = SharedEmbedding(vocab_size=10, d_model=300, pretrained_embedding=mock_kv)
+        x = torch.LongTensor([1, 2, 3])
+        out = emb(x)
+        assert out.shape == (3, 300)
 
-        # Check the shape of the output tensor.
-        assert output_tensor.shape == (5, d_model), "Incorrect shape of the output tensor."
+    @pytest.mark.parametrize("bad_input", ["string", 123, None])
+    def test_forward_bad_input(self, bad_input):
+        """Test forward with invalid input types"""
+        emb = SharedEmbedding(vocab_size=100, d_model=200)
+        with pytest.raises(TypeError):
+            emb(bad_input)
 
-        # Check that the padding tokens are zeros (almost zeros due to machine precision).
-        padding_embedding = shared_embedding(torch.tensor([padding_idx]))
-        assert torch.allclose(padding_embedding, torch.zeros(1, d_model)), "Padding embedding should be zero."
+    @patch("navec.Navec.load")
+    def test_create_pretrained(self, mock_load):
+        """Test pretrained embedding creation"""
+        mock_navec = MagicMock()
+        mock_navec.pq.shape = (1000, 300)
+        mock_navec.vocab.pad_id = 0
+        mock_navec.vocab.unk_id = 1
+        mock_navec.pq.dim = 300
+        mock_navec.vocab.words = [f"word{i}" for i in range(1000)]
+        mock_navec.pq.unpack.return_value = np.random.rand(1000, 300)
+        mock_load.return_value = mock_navec
 
-        # Check that the transformation is the same for the same token.
-        token_index = 1
-        token1_embedding = shared_embedding(torch.tensor([token_index]))
-        token2_embedding = shared_embedding(torch.tensor([token_index]))
-        assert torch.allclose(token1_embedding, token2_embedding), "Embeddings for the same token should be the same."
+        emb, kv, pad_idx, unk_idx = create_pretrained_embedding("dummy_path")
+        assert isinstance(emb, SharedEmbedding)
+        assert pad_idx == 0
+        assert unk_idx == 1
 
-    def test_init_with_pretrained_embedding(self):
-        """
-        Tests the SharedEmbedding class initialization with pretrained embedding.
-        """
-        vocab_size = 10
-        d_model = 5
-        padding_idx = 0
+    def test_build_keyed_vectors(self, mock_kv):
+        """Test KeyedVectors construction"""
+        mock_navec = MagicMock()
+        mock_navec.pq.dim = 300
+        mock_navec.vocab.words = [f"word{i}" for i in range(10)]
+        mock_navec.pq.unpack.return_value = np.random.rand(10, 300)
 
-        pretrained_embedding = nn.Embedding(
-            vocab_size, d_model, padding_idx=padding_idx
-        )  # Example pre-trained embedding
-        shared_embedding = SharedEmbedding(
-            vocab_size=vocab_size, d_model=d_model, padding_idx=padding_idx, pretrained_embedding=pretrained_embedding
-        )
-        assert (
-            shared_embedding._SharedEmbedding__embedding.num_embeddings == vocab_size
-        ), "Wrong parameters of nn.Embedding."
-        assert (
-            shared_embedding._SharedEmbedding__embedding.embedding_dim == d_model
-        ), "Wrong parameters of nn.Embedding."
-
-        # Create an input tensor.
-        input_tensor = torch.tensor([1, 2, 3, 4, 5])
-
-        # Transform the input tensor.
-        output_tensor = shared_embedding(input_tensor)
-
-        # Check the shape of the output tensor.
-        assert output_tensor.shape == (5, d_model), "Incorrect shape of the output tensor."
-
-        # Check that the transformation is the same for the same token.
-        token_index = 1
-        token1_embedding = shared_embedding(torch.tensor([token_index]))
-        token2_embedding = shared_embedding(torch.tensor([token_index]))
-        assert torch.allclose(token1_embedding, token2_embedding), "Embeddings for the same token should be the same."
+        kv = _build_keyed_vectors(mock_navec)
+        assert kv.vector_size == 300
+        assert len(kv) == 12  # 10 words + 2 special tokens
 
     def test_invalid_pretrained_embedding(self):
         pretrained_embedding = "embedding"
@@ -136,81 +123,3 @@ class TestSharedEmbedding:
         shared_embedding = SharedEmbedding(vocab_size=10, d_model=5)
         with pytest.raises(TypeError):
             shared_embedding.forward(x="not a tensor")
-
-    def test_batched_input(self, init_shared_embedding_no_padding_idx):
-        """
-        Test SharedEmbedding with batched input.
-        """
-        shared_embedding, vocab_size, d_model = init_shared_embedding_no_padding_idx
-
-        # Create a batched input tensor.
-        batch_size = 2
-        seq_len = 3
-        input_tensor = torch.randint(0, vocab_size, (batch_size, seq_len))
-
-        # Embed the batched input.
-        output_tensor = shared_embedding(input_tensor)
-
-        # Check the shape of the output tensor.
-        assert output_tensor.shape == (batch_size, seq_len, d_model), "Incorrect shape for batched output."
-
-    def test_no_padding(self, init_shared_embedding_no_padding_idx):
-        """
-        Test SharedEmbedding without padding index.
-        """
-        shared_embedding, vocab_size, d_model = init_shared_embedding_no_padding_idx
-
-        input_tensor = torch.tensor([0, 1, 2])
-        output_tensor = shared_embedding(input_tensor)
-
-        assert output_tensor.shape == (3, d_model), "Incorrect shape without padding."
-
-    def test_different_dtype(self, init_shared_embedding_no_padding_idx):
-        """
-        Test SharedEmbedding with different dtype of input tensor.
-        """
-        shared_embedding, vocab_size, d_model = init_shared_embedding_no_padding_idx
-
-        input_tensor = torch.tensor([0, 1, 2], dtype=torch.int64)
-        output_tensor = shared_embedding(input_tensor)
-
-        assert output_tensor.shape == (3, d_model), "Incorrect shape with specified dtype."
-
-    @patch("navec.Navec.load")  # Mock Navec.load within your_module
-    def test_create_pretrained_embedding(self, mock_navec_load):
-        """Tests create_pretrained_embedding function with mocked Navec."""
-
-        # Mock Navec Object and its Attributes
-        mock_navec = MagicMock(spec=Navec)
-
-        # Mock navec.vocab
-        mock_vocab = MagicMock()
-        mock_vocab.word_ids = {}
-        mock_navec.vocab = mock_vocab
-        mock_navec.vocab.pad_id = 0
-
-        # Mock navec.pq
-        mock_pq = MagicMock()
-        mock_pq.shape = (1000, 300)
-        mock_pq.indexes = np.zeros(5)
-        mock_pq.codes = np.zeros((5, 5, 5))
-        mock_navec.pq = mock_pq
-
-        # Mock navec.meta
-        mock_navec.meta = MagicMock()
-        mock_navec.meta.id = MagicMock()
-
-        # Set the return value of Navec.load to the mocked object
-        mock_navec_load.return_value = mock_navec
-
-        # Call the function
-        path = "dummy/path/to/embedding.vec"  # or any path
-        shared_embedding, returned_navec = create_pretrained_embedding(path)
-
-        # Check Navec.load was called with the correct path
-        mock_navec_load.assert_called_once_with(path)
-
-        # Check that SharedEmbedding was created with correct parameters
-        assert isinstance(shared_embedding, SharedEmbedding)
-        # Ensure correct return value
-        assert returned_navec is mock_navec

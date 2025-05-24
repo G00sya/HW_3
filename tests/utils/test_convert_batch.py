@@ -11,7 +11,7 @@ def test_convert_batch_shape_no_mock(example_batch_tensors):
             self.target = target
 
     example_batch = MockBatch(source_data, target_data)
-    source_inputs, target_inputs, source_mask, target_mask = convert_batch(example_batch, pad_idx=0)
+    source_inputs, target_inputs, source_mask, target_mask = convert_batch(example_batch, pad_idx=0, unk_idx=0)
 
     assert source_inputs.shape == (4, 2)  # (source_seq_len, batch_size)
     assert target_inputs.shape == (3, 2)  # (target_seq_len, batch_size)
@@ -30,7 +30,7 @@ def test_convert_batch_values_no_mock(example_batch_tensors):
 
     example_batch = MockBatch(source_data, target_data)
 
-    source_inputs, target_inputs, source_mask, target_mask = convert_batch(example_batch, pad_idx=0)
+    source_inputs, target_inputs, source_mask, target_mask = convert_batch(example_batch, pad_idx=0, unk_idx=0)
 
     # Check a couple of values in the input tensors (after transpose)
     assert source_inputs[0, 0].item() == 1

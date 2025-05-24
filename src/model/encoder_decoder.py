@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 import torch.nn as nn
 
@@ -89,3 +91,7 @@ class EncoderDecoder(nn.Module):
         decoder_output = self.decoder(target_inputs, encoder_output, source_mask, target_mask)
 
         return self.generator(decoder_output)
+
+    def save_model(self, name) -> None:
+        path = Path(__file__).parent.parent.parent / "model" / name
+        torch.save(self.state_dict(), path)
