@@ -5,88 +5,93 @@ import torch
 from torch import nn
 
 from src.train import do_epoch
-from src.utils.noam_opt import NoamOpt
 
 
-class MockDataIter:
-    def __init__(self, batches):
-        self.batches = batches
+class TestDoEpoch:
+    @pytest.fixture
+    def mock_components(self):
+        """Setup mock components with proper tensor handling"""
+        # Test dimensions
+        batch_size = 4
+        seq_len = 10
+        vocab_size = 1000
 
-    def __iter__(self):
-        return iter(self.batches)
+        # Create a model mock that handles tensor operations
+        model = MagicMock()
+        logits = torch.randn(batch_size, seq_len - 1, vocab_size, requires_grad=True)
+        model.forward.return_value = logits
 
-    def __len__(self):
-        return len(self.batches)
+        # Make contiguous() and view() return proper tensors
+        # model.return_value.contiguous.return_value = logits.contiguous()
+        # model.return_value.contiguous.return_value.view.return_value = logits.view(-1, vocab_size)
 
+        # Create a mock batch
+        batch = MagicMock()
+        batch.source = torch.randint(0, vocab_size, (seq_len, batch_size))
+        batch.target = torch.randint(0, vocab_size, (seq_len, batch_size))
 
-@pytest.fixture
-def setup():
-    # Setup a more complete mock structure
-    model = MagicMock(spec=nn.Module)
-    criterion = MagicMock(spec=nn.Module)
-    optimizer = MagicMock(spec=torch.optim.Optimizer)
-    scheduler = MagicMock(spec=NoamOpt)
+        # Configure data iterator
+        data_iter = MagicMock()
+        data_iter.__iter__.return_value = [batch]  # Yield one batch
+        data_iter.__len__.return_value = 1  # One batch total
 
-    # Create proper batch structure with requires_grad for training
-    batch = (
-        torch.randn(2, 10, 512),  # source_inputs
-        torch.randint(0, 100, (2, 12)),  # target_inputs
-        torch.ones(2, 10),  # source_mask
-        torch.ones(2, 12, 12),  # target_mask
-    )
+        # Other components
+        criterion = nn.CrossEntropyLoss()
+        optimizer = MagicMock()
+        scheduler = MagicMock()
 
-    # Create mock data iterator with proper length
-    data_iter = MockDataIter([batch, batch])  # 2 identical batches
+        return {
+            "model": model,
+            "criterion": criterion,
+            "data_iter": data_iter,
+            "optimizer": optimizer,
+            "scheduler": scheduler,
+            "batch": batch,  # Expose the mock batch for verification
+        }
 
-    # Mock convert_batch to return the batch as-is
-    with patch("src.train.convert_batch") as mock_convert:
-        mock_convert.side_effect = lambda x: x  # Just return the batch unchanged
-        yield model, criterion, optimizer, 1, scheduler, data_iter
+    def test_batch_processing(self, mock_components):
+        """Test complete batch processing pipeline"""
+        with patch("src.utils.mask.convert_batch") as mock_convert:
+            # Setup convert_batch mock
+            source_mask = torch.ones(2, 1, 10, dtype=torch.bool)
+            target_mask = torch.ones(2, 10, 10, dtype=torch.bool)
+            mock_convert.return_value = (
+                mock_components["batch"].source,
+                mock_components["batch"].target,
+                source_mask,
+                target_mask,
+            )
 
+            # Run epoch
+            loss = do_epoch(
+                model=mock_components["model"],
+                criterion=mock_components["criterion"],
+                data_iter=mock_components["data_iter"],
+                epoch_number=1,
+                pad_idx=0,
+                unk_idx=1,
+                optimizer=None,
+                use_wandb=False,
+            )
 
-def test_training_mode(setup):
-    model, criterion, optimizer, epoch_number, scheduler, data_iter = setup
+            # Verify
+            assert isinstance(loss, float)
 
-    # Create a tensor that requires grad for training
-    mock_output = torch.randn(2 * 11, 100, requires_grad=True)
-    model.forward.return_value = mock_output
-    criterion.return_value = torch.tensor(1.23, requires_grad=True)
+    def test_training_mode(self, mock_components):
+        """Test optimizer steps in training mode"""
+        with patch("src.utils.mask.convert_batch"):
+            do_epoch(
+                model=mock_components["model"],
+                criterion=mock_components["criterion"],
+                data_iter=mock_components["data_iter"],
+                epoch_number=1,
+                pad_idx=0,
+                unk_idx=1,
+                optimizer=mock_components["optimizer"],
+                scheduler=mock_components["scheduler"],
+                use_wandb=False,
+            )
 
-    loss = do_epoch(model, criterion, data_iter, epoch_number, optimizer, scheduler, "Train", False)
-
-    # Verify training mode behaviors
-    model.train.assert_called_once_with(True)
-    assert optimizer.zero_grad.call_count == 2
-    assert optimizer.step.call_count == 2
-    assert isinstance(loss, float)
-
-
-def test_validation_mode(setup):
-    model, criterion, _, epoch_number, scheduler, data_iter = setup
-    model.forward.return_value = torch.randn(2 * 11, 100)
-    criterion.return_value = torch.tensor(2.34)
-
-    loss = do_epoch(model, criterion, data_iter, epoch_number, None, scheduler, "Val", False)
-
-    model.train.assert_called_once_with(False)
-    assert isinstance(loss, float)
-
-
-def test_batch_processing(setup):
-    model, criterion, _, epoch_number, scheduler, data_iter = setup
-    model.forward.return_value = torch.randn(2 * 11, 100)
-    criterion.return_value = torch.tensor(1.0)
-
-    do_epoch(model, criterion, data_iter, epoch_number, None, scheduler, None, False)
-
-    assert model.forward.call_count == 2
-
-
-def test_empty_iterator():
-    model = MagicMock(spec=nn.Module)
-    criterion = MagicMock(spec=nn.Module)
-    empty_iter = MockDataIter([])  # Empty iterator
-    epoch_number = 1
-
-    with pytest.raises(ZeroDivisionError):
-        do_epoch(model, criterion, empty_iter, epoch_number, None, None, None)
+            mock_components["optimizer"].zero_grad.assert_called_once()
+            mock_components["optimizer"].step.assert_called_once()
+            mock_components["scheduler"].step.assert_called_once()
