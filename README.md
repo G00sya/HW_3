@@ -182,6 +182,11 @@ make install_dataset
 make install_pretrained_embeddings
 ```
 
+Для запуска JupyterLab (нужно запустить внутри настроенного окружения)
+```bash
+jupyter lab
+```
+
 # Запуск пайплайна
 
 При первом запуске, используйте сперва:
