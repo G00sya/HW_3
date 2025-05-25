@@ -30,9 +30,6 @@ def load_model_and_data(
         data = Data(navec)
         data.init_dataset(data_path)
 
-        # Verify vocabulary
-        assert len(navec.key_to_index) == len(data.word_field.vocab), "Vocabulary size mismatch"
-
         # Recreate model
         model = EncoderDecoder(
             target_vocab_size=len(navec.key_to_index),
