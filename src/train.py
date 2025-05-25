@@ -171,6 +171,9 @@ def fit(
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
 
+        # if (epoch + 1) % 3 == 0:
+        #     model.save_model(f"model-{epoch + 1}_epochs-without_unk_and_punctuation_all_data.pt")
+
     return train_losses, best_val_loss  # Return training and validation losses
 
 
@@ -229,7 +232,9 @@ if __name__ == "__main__":
 
     # Initialize wandb session
     wandb.init(
-        config=config, project="ML Homework-3", name=f"pretrained embedding-{config['epochs']} epochs without UNK"
+        config=config,
+        project="ML Homework-3",
+        name=f"pretrained embedding-{config["epochs"]} epochs without UNK and punctuation marks all data",
     )
     wandb.watch(model)
 
@@ -248,4 +253,4 @@ if __name__ == "__main__":
     )
     wandb.finish()
 
-    model.save_model("model-15_epochs-without_unk.pt")
+    # model.save_model("model-15_epochs-without_unk.pt")
