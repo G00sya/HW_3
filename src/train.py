@@ -3,10 +3,10 @@ from pathlib import Path
 
 import torch
 import torch.optim as optim
-import wandb
 from torchtext.data import BucketIterator
 from tqdm.auto import tqdm
 
+import wandb
 from src.data.prepare_data import Data, Tokens
 from src.model.encoder_decoder import EncoderDecoder
 from src.model.hparams import config
@@ -31,6 +31,7 @@ def do_epoch(
     scheduler: NoamOpt | None = None,
     name: str | None = None,
     use_wandb: bool = True,
+    data: Data | None = None,
 ) -> float:
     """
     Performs a single training or validation epoch with progress tracking.
@@ -45,6 +46,7 @@ def do_epoch(
     :param scheduler: Scheduler for learning rate managing. None for validation.
     :param name: Prefix for progress bar descriptions (e.g., "Train").
     :param use_wandb: If True it logs info in wandb.
+    :param data: Data object to convert output of model.
     :return: Average loss across all batches in the epoch.
     """
     epoch_loss = 0
@@ -67,12 +69,12 @@ def do_epoch(
                 logits = model.forward(source_inputs, target_inputs[:, :-1], source_mask, target_mask[:, :-1, :-1])
 
                 # group all batches in one "sentence". Shape: (batch_size * (target_sequence_length-1), vocab_size)
-                logits = logits.contiguous().view(-1, logits.shape[-1])
+                logits_viewed = logits.contiguous().view(-1, logits.shape[-1])
 
                 # group all batches in one "sentence". Shape: (batch_size * (target_sequence_length-1))
                 target = target_inputs[:, 1:].contiguous().view(-1)
 
-                loss = criterion(logits, target)
+                loss = criterion(logits_viewed, target)
                 epoch_loss += loss.item()
                 if is_train:
                     optimizer.zero_grad()
@@ -81,7 +83,9 @@ def do_epoch(
                     optimizer.step()
 
                     if i % 100 == 0 and use_wandb:
-                        metrics = estimate_current_state(loss, scheduler.rate())
+                        metrics = estimate_current_state(
+                            logits, target_inputs, data.word_field.vocab, loss, scheduler.rate()
+                        )
                         step = epoch_number * len(data_iter) + i
                         wandb.log(
                             metrics,
@@ -113,6 +117,7 @@ def fit(
     unk_idx: int,
     epochs_count: int = 1,
     val_iter: BucketIterator | None = None,
+    data: Data | None = None,
 ) -> tuple[list[float], float]:
     """
     Trains the model for specified number of epochs with optional validation.
@@ -127,6 +132,7 @@ def fit(
     :param unk_idx: Index of unknown words in vocabulary.
     :param epochs_count: Number of complete passes through the training data. Default: 1.
     :param val_iter: Optional validation data iterator with same format as train_iter. Default: None.
+    :param data: Data object to convert output of model.
     :return: Tuple containing (training_losses, best_validation_loss).
              training_losses: List of average training losses per epoch.
              best_validation_loss: Lowest validation loss encountered (inf if no validation).
@@ -146,6 +152,7 @@ def fit(
             optimizer=optimizer,
             scheduler=scheduler,
             name=name_prefix + "Train:",
+            data=data,
         )
         train_losses.append(train_loss)  # Store training loss
 
@@ -237,6 +244,7 @@ if __name__ == "__main__":
         unk_idx=unk_idx,
         epochs_count=config["epochs"],
         val_iter=None,
+        data=data,
     )
     wandb.finish()
 
