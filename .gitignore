@@ -36,3 +36,5 @@ coverage.xml
 cover/
 *.csv
 /embeddings
+/wandb/
+/src/wandb

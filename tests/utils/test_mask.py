@@ -43,11 +43,12 @@ def test_make_mask_shapes():
     source_seq_len = 10
     target_seq_len = 8
     pad_idx = 0
+    unk_idx = 1
 
     source_inputs = torch.randint(1, 100, (batch_size, source_seq_len))
     target_inputs = torch.randint(1, 100, (batch_size, target_seq_len))
 
-    source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx)
+    source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx, unk_idx)
 
     assert source_mask.shape == (batch_size, 1, source_seq_len)
     assert target_mask.shape == (batch_size, target_seq_len, target_seq_len)
@@ -56,11 +57,12 @@ def test_make_mask_shapes():
 def test_make_mask_padding():
     """Tests that make_mask correctly masks padding tokens."""
     pad_idx = 0
+    unk_idx = 0
 
     source_inputs = torch.tensor([[1, 2, 0, 4, 0]])  # 0 is padding
     target_inputs = torch.tensor([[5, 0, 7, 0]])  # 0 is padding
 
-    source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx)
+    source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx, unk_idx)
 
     assert source_mask[0, 0, 2].item() is False  # Padding should be False
     assert source_mask[0, 0, 4].item() is False  # Padding should be False
@@ -79,11 +81,12 @@ def test_make_mask_subsequent():
     batch_size = 1
     target_seq_len = 4
     pad_idx = 0
+    unk_idx = 1
 
     source_inputs = torch.randint(1, 100, (batch_size, 5))  # Dummy source inputs
     target_inputs = torch.randint(1, 100, (batch_size, target_seq_len))
 
-    source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx)
+    source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx, unk_idx)
 
     # Checks that the upper triangle of target_mask (future) is False
     expected_false = torch.zeros(target_seq_len - 1, dtype=torch.bool)  # Tensor of False
@@ -102,11 +105,12 @@ def test_make_mask_no_padding():
     source_seq_len = 5
     target_seq_len = 4
     pad_idx = -1
+    unk_idx = 1
 
     source_inputs = torch.randint(1, 100, (batch_size, source_seq_len))
     target_inputs = torch.randint(1, 100, (batch_size, target_seq_len))
 
-    source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx)
+    source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx, unk_idx)
 
     expected_mask = subsequent_mask(target_seq_len).type_as(target_mask)
     assert (target_mask[0] == expected_mask).all()
@@ -119,11 +123,12 @@ def test_make_mask_different_lengths():
     source_seq_len = 7
     target_seq_len = 5
     pad_idx = 0
+    unk_idx = 1
 
     source_inputs = torch.randint(1, 100, (batch_size, source_seq_len))
     target_inputs = torch.randint(1, 100, (batch_size, target_seq_len))
 
-    source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx)
+    source_mask, target_mask = make_mask(source_inputs, target_inputs, pad_idx, unk_idx)
 
     assert source_mask.shape == (batch_size, 1, source_seq_len)
     assert target_mask.shape == (batch_size, target_seq_len, target_seq_len)
