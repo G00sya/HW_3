@@ -24,3 +24,6 @@ install_dataset:
 
 make train:
 	poetry python run src/train.py
+
+make predict:
+    poetry python run src/predict.py

@@ -2,20 +2,28 @@ stages:
   prepare_data:
     cmd: make install_dataset
     deps:
-    - Makefile
+      - Makefile
     outs:
-    - data/news.csv
+      - data/news.csv
+
   install_pretrained_embeddings:
     cmd: make install_pretrained_embeddings
     deps:
       - Makefile
     outs:
       - embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar
+
   train:
     cmd: make train
     deps:
-    - data/news.csv
-    - embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar
-    - src/train.py
+      - data/news.csv
+      - embeddings/navec_hudlit_v1_12B_500K_300d_100q.tar
+      - src/train.py
     outs:
-    - weights/model.pt
+      - model/model.pt
+      -
+  predict:
+    cmd: make predict
+    deps:
+      - src/predict.py
+      - model/model.pt
