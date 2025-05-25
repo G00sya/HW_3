@@ -1,12 +1,11 @@
 import json
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import torch
 
 from src.data.prepare_data import Data
 from src.model.encoder_decoder import EncoderDecoder
-from src.utils.device import setup_device
 from src.utils.shared_embedding import create_pretrained_embedding
 
 
@@ -18,7 +17,7 @@ def load_model_and_data(
 ) -> Tuple[EncoderDecoder, Data]:
     """Enhanced loader with validation checks"""
     # Path resolution
-    base_dir = Path(__file__).parent.parent.parent
+    base_dir = Path(__file__).parent.parent
     embedding_path = embedding_path or str(base_dir / "embeddings" / "navec_hudlit_v1_12B_500K_300d_100q.tar")
     data_path = data_path or str(base_dir / "data" / "raw" / "news.csv")
 
@@ -62,9 +61,17 @@ def batch_predict(
     max_length: int = 100,
     device: torch.device = None,
     output_file: Optional[str] = None,
-) -> Tuple[List[str], dict]:
+) -> Tuple[List[str], Dict]:
     """
     Run prediction on multiple texts with optional saving.
+
+    Args:
+        model: The summarization model.
+        data: The Data object containing vocabulary and other information.
+        texts: A list of input texts to summarize.
+        max_length: The maximum length of the generated summaries.
+        device: The device to run the model on (CPU or GPU).
+        output_file: Optional path to a JSON file to save the results.
 
     Returns:
         Tuple of (predictions, results_dict) where results_dict contains:
@@ -73,9 +80,13 @@ def batch_predict(
         - tokens: tokenized inputs (for debugging)
     """
     device = device or next(model.parameters()).device
-    results = {"inputs": texts, "predictions": [], "tokens": []}
+    results = {
+        "inputs": texts,
+        "predictions": [],
+        "tokens": [],
+    }
 
-    for text in texts:
+    for i, text in enumerate(texts):
         try:
             # Store tokenized version for debugging
             tokens = data.word_field.preprocess(text)
@@ -123,31 +134,3 @@ def interactive_predict(model: EncoderDecoder, data: Data, device: torch.device)
             break
         except Exception as e:
             print(f"Error: {str(e)}")
-
-
-if __name__ == "__main__":
-    try:
-        DEVICE = setup_device()
-        MODEL_PATH = "/home/nur/Documents/HW_3/model/model-30_epochs-without_unk_and_punctuation.pt"
-
-        print("Loading model...")
-        model, data = load_model_and_data(MODEL_PATH, device=DEVICE)
-
-        # Sample test cases
-        test_texts = [
-            "Пластик произвел революцию в пищевой упаковке",
-            "Ученые обнаружили микрочастицы пластика в чайных пакетиках",
-            "Новые исследования показывают опасность нанопластика",
-        ]
-
-        print("\nRunning test predictions...")
-        preds, _ = batch_predict(model, data, test_texts)
-        for text, pred in zip(test_texts, preds):
-            print(f"\nInput: {text[:100]}...\nOutput: {pred}")
-
-        # Start interactive session
-        interactive_predict(model, data, DEVICE)
-
-    except Exception as e:
-        print(f"Fatal error: {str(e)}")
-        exit(1)

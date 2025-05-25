@@ -7,7 +7,6 @@ from src.data.prepare_data import Data, Tokens
 from src.model.decoder import Decoder
 from src.model.encoder import Encoder
 from src.model.generator import Generator
-from src.utils.device import setup_device
 from src.utils.shared_embedding import SharedEmbedding
 
 
@@ -95,7 +94,12 @@ class EncoderDecoder(nn.Module):
         return self.generator(decoder_output)
 
     def predict(
-        self, source_text: str, data: Data, max_length: int = 100, device: torch.device = setup_device()
+        self,
+        source_text: str,
+        data: Data,
+        max_length: int = 100,
+        device: torch.device = None,
+        verbose: bool = False,  # Add debug prints if needed
     ) -> str:
         """
         Generate a prediction for the given source text using greedy decoding.
@@ -104,66 +108,78 @@ class EncoderDecoder(nn.Module):
         :param data: Data object containing vocabulary and preprocessing
         :param max_length: Maximum length of generated sequence
         :param device: Device to run the computation on
+        :param verbose: Print debug info
         :return: Generated sentence as a string
         """
-        if not source_text.strip():
-            raise ValueError("Input text cannot be empty")
-
-        if not hasattr(data, "word_field") or not hasattr(data.word_field, "vocab"):
-            raise RuntimeError("Data object must contain initialized word_field with vocabulary")
-
         self.eval()
         device = device or next(self.parameters()).device
 
+        # Validate input
+        if not source_text.strip():
+            return ""
+
         try:
-            # Text preprocessing
+            # Tokenize with Moses (already handles UNK replacement)
             tokenized = data.word_field.preprocess(source_text)
-            if not tokenized:
-                return ""
+            if verbose:
+                print(f"Tokenized: {tokenized[:10]}...")
 
-            # Numericalization with UNK handling
+            # Numericalize tokens
             vocab = data.word_field.vocab
-            unk_idx = vocab.stoi[Tokens.UNK.value]
-            numericalized = [vocab.stoi.get(token, unk_idx) for token in tokenized]
+            numericalized = [vocab.stoi.get(token, vocab.stoi[Tokens.UNK.value]) for token in tokenized]
 
-            # Tensor preparation
+            # Prepare tensors
             source_inputs = torch.tensor(numericalized, dtype=torch.long, device=device).unsqueeze(0)
             pad_idx = vocab.stoi[Tokens.PAD.value]
-            source_mask = (source_inputs != pad_idx).unsqueeze(-2).to(device)
+            source_mask = (source_inputs != pad_idx).unsqueeze(-2)
 
-            # Generation setup
+            # Initialize generation
             bos_idx = vocab.stoi[Tokens.BOS.value]
             eos_idx = vocab.stoi[Tokens.EOS.value]
-            target_inputs = torch.tensor([[bos_idx]], dtype=torch.long, device=device)
+            target_inputs = torch.tensor([[bos_idx]], device=device)
 
             # Autoregressive decoding
             for _ in range(max_length):
-                # Create causal mask
+                # Create masks
                 target_mask = (target_inputs != pad_idx).unsqueeze(-2)
                 target_mask = target_mask & self.subsequent_mask(target_inputs.size(-1)).to(device)
 
                 # Forward pass
                 with torch.no_grad():
                     logits = self.forward(source_inputs, target_inputs, source_mask, target_mask)
-                    next_token = logits[:, -1, :].argmax(-1)
+                    next_token = logits[:, -1].argmax(-1)
 
-                # Append token and check for EOS
+                    if verbose:
+                        topk = logits[:, -1].exp().topk(5)
+                        print(
+                            "Top predictions:",
+                            [(vocab.itos[i], f"{v:.2f}") for v, i in zip(topk.values[0], topk.indices[0])],
+                        )
+
+                # Append token
                 target_inputs = torch.cat([target_inputs, next_token.unsqueeze(0)], dim=-1)
+
+                # Stop if EOS
                 if next_token.item() == eos_idx:
                     break
 
-            # Convert back to text
+            # Convert to text
             tokens = target_inputs.squeeze(0).tolist()
-            words = [vocab.itos[token] for token in tokens if token not in {bos_idx, eos_idx, pad_idx}]
+            words = [vocab.itos[t] for t in tokens if t not in {bos_idx, eos_idx, pad_idx}]
 
-            if all(word == Tokens.UNK.value for word in words):
-                first_word = tokenized[0] if tokenized else ""
-                return first_word if first_word in vocab.stoi else " ".join(tokenized[:3])
+            # Fallback if all UNK
+            if all(w == Tokens.UNK.value for w in words):
+                known_words = [t for t in tokenized if t in vocab.stoi]
+                fallback = " ".join(known_words[:3]) if known_words else tokenized[0]
+                if verbose:
+                    print(f"Fallback triggered. Original: {tokenized[:3]}")
+                return fallback
 
             return " ".join(words)
 
         except Exception as e:
-            raise RuntimeError(f"Prediction failed: {str(e)}") from e
+            print(f"Prediction error: {str(e)}")
+            return source_text.split()[0]  # Ultimate fallback
 
     @staticmethod
     def subsequent_mask(size: int) -> torch.Tensor:
