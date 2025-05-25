@@ -166,7 +166,6 @@ class EncoderDecoder(nn.Module):
             tokens = target_inputs.squeeze(0).tolist()
             words = [vocab.itos[t] for t in tokens if t not in {bos_idx, eos_idx, pad_idx}]
 
-
             # Fallback if all UNK
             if all(w == Tokens.UNK.value for w in words):
                 known_words = [t for t in tokenized if t in vocab.stoi]
@@ -192,7 +191,6 @@ class EncoderDecoder(nn.Module):
         attn_shape = (1, size, size)
         subsequent_mask = torch.triu(torch.ones(attn_shape), diagonal=1).type(torch.uint8)
         return subsequent_mask == 0
-
 
     def save_model(self, name) -> None:
         """Save the model's state dictionary to a file."""

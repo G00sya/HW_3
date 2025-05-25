@@ -22,5 +22,5 @@ install_dataset:
 	unzip data/news.zip -d data/raw
 	rm data/news.zip
 
-train:
-    python src/train.py
+make train:
+	poetry python run src/train.py
