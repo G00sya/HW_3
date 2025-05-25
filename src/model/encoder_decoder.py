@@ -114,7 +114,6 @@ class EncoderDecoder(nn.Module):
         self.eval()
         device = device or next(self.parameters()).device
 
-        # Validate input
         if not source_text.strip():
             return ""
 

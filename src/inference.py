@@ -15,13 +15,11 @@ def load_model_and_data(
     data_path: Optional[str] = None,
     device: torch.device = torch.device("cpu"),
 ) -> Tuple[EncoderDecoder, Data]:
-    """Enhanced loader with validation checks"""
-    # Path resolution
+    """Loader with validation checks"""
     base_dir = Path(__file__).parent.parent
     embedding_path = embedding_path or str(base_dir / "embeddings" / "navec_hudlit_v1_12B_500K_300d_100q.tar")
     data_path = data_path or str(base_dir / "data" / "raw" / "news.csv")
 
-    # Validate paths
     for path, name in [(model_path, "model"), (embedding_path, "embedding"), (data_path, "data")]:
         if not Path(path).exists():
             raise FileNotFoundError(f"{name.capitalize()} file not found at {path}")
@@ -65,16 +63,14 @@ def batch_predict(
     """
     Run prediction on multiple texts with optional saving.
 
-    Args:
-        model: The summarization model.
-        data: The Data object containing vocabulary and other information.
-        texts: A list of input texts to summarize.
-        max_length: The maximum length of the generated summaries.
-        device: The device to run the model on (CPU or GPU).
-        output_file: Optional path to a JSON file to save the results.
+    :param model: The summarization model.
+    :param data: The Data object containing vocabulary and other information.
+    :param texts: A list of input texts to summarize.
+    :param max_length: The maximum length of the generated summaries.
+    :param device: The device to run the model on (CPU or GPU).
+    :param output_file: Optional path to a JSON file to save the results.
 
-    Returns:
-        Tuple of (predictions, results_dict) where results_dict contains:
+    :return: Tuple of (predictions, results_dict) where results_dict contains:
         - inputs: original texts
         - predictions: generated summaries
         - tokens: tokenized inputs (for debugging)
@@ -106,7 +102,7 @@ def batch_predict(
 
 
 def interactive_predict(model: EncoderDecoder, data: Data, device: torch.device):
-    """Enhanced interactive session with debug options"""
+    """Interactive session with debug options"""
     print("\nEnter text to summarize (or commands):")
     print("- 'debug' to toggle verbose mode")
     print("- 'quit' to exit\n")
