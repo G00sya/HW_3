@@ -84,14 +84,6 @@ if __name__ == "__main__":
         print("Loading model and data...")
         model, data = load_model_and_data(model_path=MODEL_PATH, device=DEVICE)
         print("Model loaded successfully!")
-
-        # After data initialization
-        # sample_tokens = ["Пластик", "ученые", "частицы"]  # Words from your input
-        # print("\nVocabulary check:")
-        # for token in sample_tokens:
-        #     idx = data.word_field.vocab.stoi.get(token, -1)
-        #     print(f"'{token}': {'Exists' if idx != -1 else 'UNK'} (idx={idx})")
-
         interactive_predict(model, data, DEVICE)
 
     except Exception as e:
