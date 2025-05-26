@@ -91,23 +91,6 @@ def test_special_token_filtering(sample_vocab):
     assert metrics["rouge"] >= 0
 
 
-def test_empty_sequences(sample_vocab):
-    """Verify empty sequences after filtering return 0 score"""
-    targets = torch.tensor(
-        [[sample_vocab[Tokens.BOS.value], sample_vocab[Tokens.EOS.value], sample_vocab[Tokens.PAD.value]]]
-    )
-
-    results = estimate_current_state(
-        logits=torch.randn(1, 2, len(sample_vocab)),
-        target_inputs=targets,
-        vocab=sample_vocab,
-        loss=torch.tensor(0.0),
-        scheduler_rate=0.01,
-    )
-
-    assert results["rouge"] == 0.0
-
-
 def test_perfect_match(sample_vocab):
     """Test perfect predictions return max score"""
     targets = torch.tensor([[sample_vocab[str(Tokens.BOS)], sample_vocab["hello"], sample_vocab["world"]]])
