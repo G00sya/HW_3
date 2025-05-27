@@ -15,6 +15,12 @@ pandas = "^2.2.3"
 gensim = "^4.3.3"
 navec = "^0.10.0"
 slovnet="^0.6.0"
+dvc="^3.59.2"
+wandb="^0.19.11"
+Natasha="^1.6.0"
+jupyterlab = "^4.4.2"
+matplotlib = "^3.10.1"
+seaborn = "^0.13.2"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^4.1.0"
@@ -47,7 +53,8 @@ omit = [
     "**/tests/*.py",
     "**/sandbox.py",
     "**/logger.py",
-    "**/prepare_data.py"
+    "**/prepare_data.py",
+    "**/inference.py",
 ]
 
 [tool.coverage.report]

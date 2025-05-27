@@ -50,6 +50,7 @@ class ScaledDotProductAttention(nn.Module):
             # probabilities to the masked positions. This is crucial for preventing those positions from influencing
             # the attention mechanism.
             scores = scores.masked_fill(mask == 0, -1e9)
+
         p_attn = F.softmax(scores, dim=-1)
         p_attn = self.__dropout(p_attn)
 
