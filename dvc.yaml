@@ -21,7 +21,7 @@ stages:
       - src/train.py
     outs:
       - model/model.pt
-      -
+
   predict:
     cmd: make predict
     deps:
