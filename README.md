@@ -204,6 +204,9 @@ dvc repro
 https://drive.google.com/drive/folders/1qRwTOUDswB2EF-Fzp-EL3QQ3lpIIa4y1?usp=sharing
 ```
 
+# Отчёт о модели
+Демонстрацию работы модели и механизма attention можно посмотреть в папке notebooks.
+Графики обучения с предобученными эмбедингами и без: https://api.wandb.ai/links/shatunov868-mipt/aioj4hsl.
 # Структура проекта
 
 ```
