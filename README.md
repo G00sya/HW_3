@@ -198,6 +198,12 @@ dvc init
 dvc repro
 ```
 
+# Веса модели
+Скачать веса модели можно отсюда
+```
+https://drive.google.com/drive/folders/1qRwTOUDswB2EF-Fzp-EL3QQ3lpIIa4y1?usp=sharing
+```
+
 # Структура проекта
 
 ```
