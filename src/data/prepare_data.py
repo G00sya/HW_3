@@ -32,15 +32,24 @@ class Data:
 
         self.__logger = setup_logger("prepare_data")
         self.__device = setup_device()
-
-        self.word_field = Field(
-            tokenize=lambda x: self._safe_moses_tokenize(x),
-            init_token=Tokens.BOS.value,
-            eos_token=Tokens.EOS.value,
-            pad_token=Tokens.PAD.value,
-            unk_token=Tokens.UNK.value,
-            use_vocab=True,
-        )
+        if embedding_model is not None:
+            self.word_field = Field(
+                tokenize=lambda x: self._safe_moses_tokenize(x),
+                init_token=Tokens.BOS.value,
+                eos_token=Tokens.EOS.value,
+                pad_token=Tokens.PAD.value,
+                unk_token=Tokens.UNK.value,
+                use_vocab=True,
+            )
+        else:
+            self.word_field = Field(
+                init_token=Tokens.BOS.value,
+                eos_token=Tokens.EOS.value,
+                pad_token=Tokens.PAD.value,
+                unk_token=Tokens.UNK.value,
+                use_vocab=True,
+                lower=True,
+            )
         self.__embedding_model = embedding_model
         self.__mt = MosesTokenizer(lang="ru")
 
